@@ -1,0 +1,6 @@
+export WANT_AUTOCONF_2_5=1
+autoconf  --include `gauche-config --ac` configure.in> configure  
+
+./configure
+
+make

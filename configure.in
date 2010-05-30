@@ -1,0 +1,26 @@
+dnl
+dnl Configure pg extension
+dnl  process this file with "autoconf -l ../.." to generate 'configure'.
+dnl $Id: configure.in,v 1.1 2004/03/13 17:34:57 mmc Exp $
+AC_INIT()
+AC_CANONICAL_SYSTEM
+AC_GAUCHE_INIT_EXT
+
+# Sets the default value of INSTALL_TYPE macro.
+AC_GAUCHE_INSTALL_TYPE(sys)
+
+# Get compiler parameters which Gauche has been compiled with.
+AC_GAUCHE_CC
+AC_GAUCHE_FLAGS
+
+# Check for other programs.
+AC_PROG_INSTALL
+
+# Add more test
+
+# Set LDFLAGS to generate shared library.
+AC_GAUCHE_FIX_LIBS
+
+# Output
+AC_GAUCHE_EXT_FIXUP(xlib)
+AC_OUTPUT(Makefile)

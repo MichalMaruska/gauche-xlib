@@ -1,0 +1,76 @@
+;; -*-scheme-*-
+
+;; old comment:
+;; fixme: howto avoid it ? (separate to .h files)
+;; i need this  code copied from other dir:  (i.e.  doubled)
+
+
+
+;; define-type
+;;
+;; check  unboxer
+;;  O ----------- >  C-type
+;;   
+;;   <------------
+;;      boxer
+;;
+;; this all needs a new C type, typecastaed from ScmObj
+;;
+;; note, that this is neither possible to create!
+;; it could be more different C types !
+
+
+
+;;;  some useful types:              params to c-functions, and slots (in c-classes)??
+;; types .. C part
+
+;; copied from ...
+"#define CONST_CHAR_PTR(string)     ((const char*)Scm_GetStringConst(SCM_STRING(string)))"
+
+
+;; i need this  code copied from other dir:  (i.e.  doubled)
+(define-type <const-char*> "const char *" "C strings owned by the library (i.e. we don't free it, but the extern code can)."
+  "SCM_STRINGP"
+  "CONST_CHAR_PTR"
+  "Scm_charPtr_Box")
+
+;; why copying ??
+"ScmObj Scm_charPtr_Box(const char *string)
+{
+ if (string == NULL)
+    return SCM_FALSE;
+ ScmObj s = SCM_MAKE_STR_COPYING(string);
+ return s;
+}"
+
+
+
+"#define CONST_CHAR_PTR_OR_NULL(string)     ((SCM_FALSE == string)?NULL:((const char*)Scm_GetStringConst(SCM_STRING(string))))"
+
+
+"#define SCM_STRING_OR_FALSE_P(x)  (SCM_STRING(x) || (SCM_FALSE == x))"
+
+;; i need this  code copied from other dir:  (i.e.  doubled)
+(define-type <const-char*-or-false> "const char *" "string, optionally #f, which is translated to NULL"
+  "SCM_STRING_OR_FALSE_P"
+  "CONST_CHAR_PTR_OR_NULL"
+  "Scm_charPtr_Box"                  ; fixme!
+  )
+
+
+; "ScmObj Scm_charPtr_Box(char *string)
+; {
+;  ScmObj s = SCM_MAKE_STR_COPYING(string);
+;         return s;
+; }"
+
+
+
+(define-type <uvector> "ScmUVector*")   ; what is default ???
+
+
+(define-type <u8vector> "ScmU8Vector*")   ; what is default ???
+
+(define-type <u32vector> "ScmU32Vector*")
+
+

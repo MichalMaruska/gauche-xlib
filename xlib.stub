@@ -1,0 +1,2217 @@
+;; warning:
+;; in `xlib.stub' (here) I use `define-enums'.
+;; the `stock' genstub doesn't have that. You have to expand it (define-enums a ...) -> (define-enum a)...
+
+
+;; bugs in XKB:
+;; what calls don't work?  and more general one is needed?
+
+;;  XkbGetKeyboard     which = XkbIndicatorMapMask;   
+
+;; i had to fix /p/xfree-4.3.99.901-r1/work/xc/lib/X11/XKBGetMap.c
+
+
+;;; common headers:
+
+"#define XLIB_ILLEGAL_ACCESS"
+
+
+"#include \"xlib-lib.h\""
+
+
+(include "types.genstub")
+;; and for xlib:
+
+
+;;; `Xdpy'
+;; types & classes:
+;; dpy
+
+;;                             -- ?
+(define-type <Display*> "Display*" "pointer at the Xlib Display struct"
+  "SCM_X_DPY_P" "SCM_X_DPY" "new_x_dpy")
+
+
+(define-cclass <Display*> "Scm_X_Dpy*"
+  "ScmXdpy_class"
+  ;; cpa
+  ()
+  ()
+  (printer (c "scm_xdpy_print"))
+  )
+
+
+
+
+;;   we have to store the XKB parameters in the object, 
+;; 
+(define-cproc xkb-open-display (name::<const-char*>) 
+  "
+  int event_rtrn;
+  int error_rtrn;
+  int major = 1;
+  int minor = 0;
+  int reason_rtrn;
+  Display *dpy;
+  char* program=\"xlib.so\";
+  /* Scm_Warn(\"%s\", __FUNCTION__); */
+  dpy = XkbOpenDisplay((char*) name, &event_rtrn, &error_rtrn, &major, &minor, &reason_rtrn);
+  if (reason_rtrn){
+	switch (reason_rtrn) {
+	    case XkbOD_BadLibraryVersion:
+		Scm_Warn(\"%s was compiled with XKB version %d.%02d\\n\",
+				program,XkbMajorVersion,XkbMinorVersion);
+		Scm_Error(\"X library supports incompatible version %d.%02d\\n\",major,minor);
+		break;
+	    case XkbOD_ConnectionRefused:
+		Scm_Error(\"Cannot open display \\\"%s\\\"\\n\",name);
+		break;
+	    case XkbOD_NonXkbServer:
+		Scm_Error(\"XKB extension not present on %s\\n\",name);
+		break;
+	    case XkbOD_BadServerVersion:
+		Scm_Warn(\"%s was compiled with XKB version %d.%02d\\n\",
+				program,XkbMajorVersion,XkbMinorVersion);
+		Scm_Error(\"Server %s uses incompatible version %d.%02d\\n\",
+				name,major,minor);
+		break;
+	    default:
+	        Scm_Error(\"Unknown error %d from XkbOpenDisplay\\n\",error_rtrn);
+	}
+  };
+  XSetErrorHandler(error_handler);
+  return Scm_Values5(new_x_dpy(dpy),Scm_MakeInteger(event_rtrn),Scm_MakeInteger(error_rtrn),Scm_MakeInteger(major), Scm_MakeInteger(minor));")
+
+
+;; X11/extensions/XI.h
+;; (return <Display*> "XKBOpenDisplay")
+#;(define-cproc  x-extension-version (dpy::<Display*> name::<const-char*>)
+  "XExtensionVersion* ev = XGetExtensionVersion(dpy, name);
+if (ev->present)
+   return Scm_Values2(Scm_MakeInteger(ev->major_version), Scm_MakeInteger(ev->minor_version));
+else
+   return Scm_Values2(SCM_FALSE, SCM_FALSE);")
+
+(define-cproc x-list-input-devices (dpy::<Display*>)
+  "
+int ndevices;
+XDeviceInfo* di = XListInputDevices(dpy, &ndevices);
+XFreeDeviceList(di);
+return Scm_MakeInteger(ndevices);")
+
+
+;; fixme:  flush !!
+
+(define-cproc x-close-display (dpy::<Display*>)
+  "XCloseDisplay(dpy);
+((ScmXDpy*) dpy_scm)->dpy = NULL;
+return SCM_TRUE;")
+
+(define-cproc x-flush (dpy::<Display*>)
+  "XFlush(dpy);
+return SCM_TRUE;")
+
+
+
+;; fixme!   gtk provides it!
+;;   for Gkt+  i need a `source'
+(define-cproc xdpy->port (dpy::<Display*>)
+"
+/*      NAME  - used for the name of the port.
+      DIRECTION - either SCM_PORT_INPUT or SCM_PORT_OUTPUT
+      OWNERP - if TRUE, fd will be closed when this port is closed.
+ */
+
+#if 0 /* XLIB_ILLEGAL_ACCESS */
+typedef struct _XDisplay
+{
+	XExtData *ext_data;	/* hook for extension to hang data */
+	struct _XPrivate *private1;
+	int fd;			/* Network socket. */
+	int private2;
+	int proto_major_version;/* major version of server's X protocol */
+	int proto_minor_version;/* minor version of servers X protocol */
+	char *vendor;		/* vendor of the server hardware */
+        XID private3;
+	XID private4;
+	XID private5;
+	int private6;
+	XID (*resource_alloc)(	/* allocator function */
+		struct _XDisplay*
+	);
+	int byte_order;		/* screen byte order, LSBFirst, MSBFirst */
+	int bitmap_unit;	/* padding and data requirements */
+	int bitmap_pad;		/* padding requirements on bitmaps */
+	int bitmap_bit_order;	/* LeastSignificant or MostSignificant */
+	int nformats;		/* number of pixmap formats in list */
+	ScreenFormat *pixmap_format;	/* pixmap format list */
+	int private8;
+	int release;		/* release of the server */
+	struct _XPrivate *private9, *private10;
+	int qlen;		/* Length of input event queue */
+	unsigned long last_request_read; /* seq number of last event read */
+	unsigned long request;	/* sequence number of last request. */
+	XPointer private11;
+	XPointer private12;
+	XPointer private13;
+	XPointer private14;
+	unsigned max_request_size; /* maximum number 32 bit words in request*/
+	struct _XrmHashBucketRec *db;
+	int (*private15)(
+		struct _XDisplay*
+		);
+	char *display_name;	/* \"host:display\" string used on this connect*/
+	int default_screen;	/* default screen for operations */
+	int nscreens;		/* number of screens on this server*/
+	Screen *screens;	/* pointer to list of screens */
+	unsigned long motion_buffer;	/* size of motion buffer */
+	unsigned long private16;
+	int min_keycode;	/* minimum defined keycode */
+	int max_keycode;	/* maximum defined keycode */
+	XPointer private17;
+	XPointer private18;
+	int private19;
+	char *xdefaults;	/* contents of defaults from server */
+	/* there is more to this structure, but it is private to Xlib */
+} my_display;
+#endif
+
+#if 0
+ Status XInternalConnectionNumbers(display, fd_return, count_return)                              
+   Display *display;                                                                                
+   int **fd_return;                                                                                 
+   int *count_return;                                                     
+#endif
+
+
+return (Scm_MakePortWithFd(SCM_MAKE_STR(\"display_fd\"), SCM_PORT_INPUT,
+                                       /* (my_display*) */ (dpy)->fd, SCM_PORT_BUFFER_FULL, 0));")
+
+
+
+
+;;; events
+;; xkb-use-core-kbd
+(define-enum  XkbUseCoreKbd)
+
+;;; events
+(define-enums
+  XkbActionMessageMask
+  XkbNewKeyboardNotifyMask
+  XkbStateNotifyMask
+  XkbControlsNotifyMask
+  XkbAllEventsMask
+  )
+;; я могу сказать, что в этом году в Италии ТВ пока не смотрел. а музи
+
+(define-enums
+
+  XkbNewKeyboardNotify
+  XkbMapNotify
+  XkbStateNotify
+  XkbControlsNotify
+
+  XkbNamesNotify
+  XkbBellNotify
+  )
+
+;;  device ??
+(define-cproc xkb-select-events (display::<Display*> device::<uint32> bits-to-change::<ulong> values-for-bits::<ulong>)
+  (return <boolean> "XkbSelectEvents"))
+
+
+
+(define-type <Window> "Window" "Xlib window (just the ID)"
+  ;; int?
+  ;;(define-type <int32>   "int" "C integer"
+  "SCM_EXACTP" "Scm_GetInteger" "Scm_MakeInteger"
+  )
+
+;; cp-ied!
+(define-type <Font> "Font" #f
+  "SCM_EXACTP" "Scm_GetUInteger" "Scm_MakeIntegerFromUI")
+
+(define-type <Drawable> ;; mmc: i don't like this 
+  "Drawable" #f "SCM_EXACTP" "Scm_GetUInteger" "Scm_MakeIntegerFromUI")
+
+(define-type <GC> "GC" #f "SCM_POINTER_P" "SCM_X_GC_VALUE" "Scm_MakePointer")
+(define-type <XGCValues*> "XGCValues*" #f "SCM_POINTER_P" "SCM_XGCVALUES_VALUE"
+  "Scm_MakePointer")
+
+
+
+
+(define-type <Status> "Status" #f ;; int?
+  ;;(define-type <int32>   "int" "C integer"
+  "SCM_EXACTP" "Scm_GetInteger" "Scm_MakeInteger")
+
+
+(define-cproc x-default-root-window (display::<Display*>)
+  (return <Window> "DefaultRootWindow"))
+
+(define-cproc x-create-simple-window (display::<Display*>
+				      parent::<Window> x::<uint> y::<uint>
+				      w::<uint> h::<uint>
+				      border::<uint>  border-color::<uint> background::<uint>)
+  (return <Window>
+          "XCreateSimpleWindow"
+          ;;"(display, parent, x, y, w, h, border, border_color, background);"
+          ))
+
+(define-cproc x-set-background-pixmap
+  (display::<Display*> window::<Window> pixmap::<uint>)
+  "XSetWindowBackgroundPixmap(display, window, None);
+  return SCM_TRUE;" 
+  )
+
+
+(define-cproc x-map-window (display::<Display*> window::<Window>)
+  (return <Status>
+          "XMapWindow"
+          ;;"(display, parent, x, y, w, h, border, border_color, background);"
+          ))
+
+(define-cproc x-unmap-window (display::<Display*> window::<Window>)
+  (return <Status>
+          "XUnmapWindow"
+          ;;"(display, parent, x, y, w, h, border, border_color, background);"
+          ))
+
+
+(define-cproc xmb-set-wm-properties (display::<Display*> window::<Window> window-name::<const-char*> icon-name::<const-char*>) ; argc argv
+  "
+  // X11/Xutil.h
+  XSizeHints normal_hints ={0};
+  // normal_hints.
+  XWMHints wm_hints = {0};
+  XClassHint class_hints = {0};
+   class_hints.res_name = \"gauche\";
+   class_hints.res_class = \"gauche\";
+   
+  XmbSetWMProperties(display, window, window_name, icon_name, NULL, 0,
+                     &normal_hints, &wm_hints, &class_hints);
+
+   SCM_RETURN (SCM_UNDEFINED);")
+
+
+;; Status
+(define-cproc x-reparent-window (display::<Display*> window::<Window> new-parent::<Window> x::<uint> y::<uint>)
+  (return <Status> "XReparentWindow"))
+
+
+
+(define-cproc x-grab-mouse-confine (display::<Display*> window::<Window>)
+  "int status = XGrabPointer(display, window, 1,
+                 (ButtonPressMask | ButtonReleaseMask | EnterWindowMask),
+                 GrabModeAsync,  GrabModeAsync, window, None, CurrentTime);
+SCM_RETURN (Scm_MakeInteger(status));")
+
+
+;;;
+;  /usr/include/X11/X.h
+(define-enums
+  
+  KeyPressMask KeyReleaseMask
+  ButtonPressMask ButtonReleaseMask
+  EnterWindowMask LeaveWindowMask
+  PointerMotionMask 
+  Button1MotionMask 
+  Button2MotionMask Button3MotionMask 
+  Button4MotionMask Button5MotionMask
+                
+  ButtonMotionMask KeymapStateMask 
+  ExposureMask VisibilityChangeMask
+
+  StructureNotifyMask  ; /* ResizeRedirectMask | */
+  SubstructureNotifyMask  SubstructureRedirectMask 
+  FocusChangeMask PropertyChangeMask 
+  ColormapChangeMask OwnerGrabButtonMask
+  )
+
+;; /usr/include/X11/Xlib.h
+(define-enums
+  KeyPress
+  KeyRelease
+  ButtonPress
+  ButtonRelease
+  MotionNotify
+  EnterNotify
+  LeaveNotify
+  FocusIn
+  FocusOut
+  KeymapNotify
+  Expose
+  GraphicsExpose
+  NoExpose
+  VisibilityNotify
+  CreateNotify
+  DestroyNotify
+  UnmapNotify
+  MapNotify
+  MapRequest
+  ReparentNotify
+  ConfigureNotify
+  ConfigureRequest
+  GravityNotify
+  ResizeRequest
+  CirculateNotify
+  CirculateRequest
+  PropertyNotify
+  SelectionClear
+  SelectionRequest
+  SelectionNotify
+  ColormapNotify
+  ClientMessage
+  MappingNotify
+  LASTEvent)
+
+
+(define-cproc x-select-input (display::<Display*> window::<Window>  mask::<ulong>)
+  (return <int> "XSelectInput")
+  
+;   "
+; // fprintf(stderr, \"x-select-input: %d %d\\n\", window, mask);
+; return (Scm_MakeInteger(XSelectInput(display, window, mask)));"
+  )
+
+
+;; get the name of a window .... utf8 !
+(define-cproc x-get-wm-name (display::<Display*> window::<Window>)
+  "XTextProperty prop;
+ScmObj result = SCM_FALSE;
+Status s = XGetWMName(display, window, &prop);
+if (s  && prop.value)
+{
+   if (prop.nitems > 0)
+   {
+      char **list;
+      int count;
+      prop.nitems = strlen((char*)prop.value);
+      if (Xutf8TextPropertyToTextList (display, &prop, &list, &count)
+          >= Success)
+      {
+         if (count > 0)
+            result = SCM_MAKE_STR_COPYING(list[0]);
+         XFreeStringList (list);
+      }
+   }
+   XFree (prop.value);
+}
+return result;")
+
+
+;;; Atoms
+(define-type <atom> "Atom" #f           ;fixme:   cast to Atom !!!
+  ;; int?
+  ;;(define-type <int32>   "int" "C integer"
+  "SCM_EXACTP" "Scm_GetInteger" "Scm_MakeInteger"
+  )
+
+(define-cproc x-atom-name (display::<Display*> atom::<atom>)
+  (return <const-char*>  "XGetAtomName"))
+
+
+
+;; see `x-keysym-name'
+;; 145472728 ?? 
+(define-cproc x-keysym->string (keysym::<uint>)
+  (return <const-char*-or-false>
+          "XKeysymToString"))
+
+
+(define-cproc x-string->keysym (name::<const-char*>)
+  (return <uint> "XStringToKeysym"))
+
+
+(define-cproc xlib-keyval-to-unicode (keysym::<uint>)
+  (return <int> "xlib_keyval_to_unicode"))
+
+
+(define-cproc string->x-atom (display::<Display*> name::<const-char*> intern::<boolean>)
+  (return <atom> "XInternAtom"))
+
+
+
+;;;  X Key events
+;; server
+
+; "#define BYTE_P(obj)  (SCM_CHARP(obj) && SCM_CHAR(obj) < 256 & SCM_CHAR(obj) > 0)"
+; "#define BYTE(obj)  SCM_CHAR(obj)"
+
+; (define-type <BYTE> "BYTE"
+;   #f ;"this is just like uchar?"
+;   "SCM_BYTEP" "CONST_CHAR_PTR" "SCM_MAKE_CHAR")
+
+
+
+;;; unused:
+;;; `Time'  it's a BYTE32   miliseconds ???
+
+(define-cproc make-time (sec::<int> nsec::<int>)
+  "return Scm_MakeTime(SCM_FALSE, sec, nsec);")
+
+
+(define-type <Time> "Time"
+  #f ;"this is just like uchar?"
+  "SCM_TIMEP" "SCM_Time" "SCM_MAKE_CHAR")
+
+
+; (define-cclass <time>
+;   "ScmTime*"
+;   "Scm_TimeClass"
+;   ()
+;   (printer (c "time_print"))
+;   ()
+;   )
+
+; "static void time_print(ScmObj obj, ScmPort *out, ScmWriteContext *ctx)
+;  {
+;   PGconn* P=SCM_PG_HANDLE(obj);
+;   if (P)
+;   { 
+;    Scm_Printf(out, \"#<pg-handle %s@%s as %s>\",
+; 		   PQdb(P),
+; 		   PQhost(P),
+; 		   PQuser(P)
+; 		   )			; /* fixme: no name */
+;    } else Scm_Printf(out, \"#<pg-handle null>\") ;
+;   }"
+
+
+
+
+
+;; server-side type !!!
+                                        ; (define-type <KeyButMask> "KeyButMask"  ; CARD16
+                                        ;   #f ;"this is just like uchar?"
+                                        ;   "SCM_BYTE16" "SCM_BYTE16_P"
+                                        ;   "SCM_MAKE_INT"
+                                        ;   )
+
+
+;;; XEvent
+
+
+(define-type <x-event> "XEvent*"  ; CARD16
+  #f ;"this is just like uchar?"
+  "SCM_X_EVENT_P"
+  "SCM_X_EVENT"
+  
+  "new_x_event"                       ;SCM_MAKE_INT
+  )
+
+(define-cclass <x-event> ;qualifier ???  :base  :built-in
+  "ScmXEvent*"                             ;Scm_Xkb_event
+  "ScmXEvent_class"
+  ;; cpa:
+  ()
+  ;; slot-spec
+  (
+   (type
+    :type <uint>
+    ;; <BYTE>
+    ;:c-name "type"
+    )
+   )
+  )
+
+;; fixme:  ScmXkbKeyEvent_class
+
+(define-type <x-key-event> "XKeyEvent*"  ; CARD16
+  #f ;"this is just like uchar?"
+  "SCM_XKEY_EVENT_P"
+  "SCM_XKEY_EVENT"
+  "new_xkey_event"                       ;SCM_MAKE_INT
+  )
+
+
+(define-type <key-code> "KeyCode" #f
+  "SCM_EXACTP" "Scm_GetInteger" "Scm_MakeInteger")
+
+
+;; SCM_KEYBUTTONPOINTER_EVENT
+(define-cclass <x-key-event> ;qualifier ???  :base  :built-in
+  "ScmXKeyEvent*"                             ;Scm_Xkb_event
+  "ScmXKeyEvent_class"
+  ;; cpa:
+  ()
+  ;; slot-spec
+  (
+   (type
+    :type <uint>
+    ;; <BYTE>
+    :c-name "type"
+    )
+   (detail
+    :type <key-code>
+    :c-name "keycode")
+;    (name
+;     :type <scm-string>
+;     ; :c-name "ScmStringRec"
+;     )
+
+   (time
+    ;; i tried to make <Time>  but only a type
+    ;;  <type> is not accessible ?? public?
+    
+    
+    ;; :type <time>                        ;i could transfer to <time> !!!
+    ;; :c-name "time"
+    :getter "return XTime_to_ScmTime(obj->time);"
+    ;; fixme
+    :setter #f
+;    :p
+    )
+   (state
+    :type <uint> ;; <KeyButMask>
+    :c-name "state")
+                                        ;    (event
+                                        ;     :type  
+                                        ;     :c-name "u.keyButtonPointer.event") ;
+   
+   )					;(conn :type <pg-handle>)
+                                        ;  ()					;fields  conninfo ...
+                                        ;  (allocator (c "new_pg_handle"))
+                                        ;(printer (c "pg_print"))
+                                        ;()
+  )
+
+
+;;;
+(define-type <xkb-state> "XkbStateRec*" #f
+  ;; 
+  ;"SCM_EXACTP" "Scm_GetInteger" "Scm_MakeInteger"
+  )
+
+
+(define-cclass <xkb-state>			;qualifier ???  :base  :built-in
+  "ScmXkbStateRec*"                             ;Scm_Xkb_event
+  "Scm_XkbStateRec_Class"
+  ;; cpa:
+  ()
+  ;; slot-spec
+  ((group :type <uint8>)
+   (base_group :type <uint8>)
+   (latched_group :type <uint8>)
+   (locked_group :type <uint8>)
+   ;;
+   (mods :type <uint8>)
+   (base_mods :type <uint8>)
+   (latched_mods :type <uint8>)
+   (locked_mods :type <uint8>)
+   ;;
+   (compat_state :type <uint8>)
+   (grab_mods :type <uint8>)
+   (lookup_mods :type <uint8>)
+   (compat_lookup_mods :type <uint8>)
+   (ptr_buttons :type <ushort>)
+   )
+  )
+
+;; backfilled.
+(define-cproc xkb-get-state (dpy::<Display*> device::<uint32>)
+  "
+XkbStatePtr state = malloc(sizeof(XkbStateRec));
+XkbGetState(dpy, device, state);
+return (Scm_Make_XkbStateRec(state));
+")
+
+;;; XKB events
+
+;;                             -- ?
+(define-type <xkb-event> "XkbEvent*" #f
+  "SCM_XKB_EVENT_P" "SCM_XKB_EVENT" "new_xkb_event")
+
+(define-cclass <xkb-event>
+  "Scm_XkbEvent*"
+  "ScmXkbEvent_class"
+  ()					;cpa
+  ()					;(conn :type <pg-handle>)
+                                        ;  ()					;fields  conninfo ...
+                                        ;  (allocator (c "new_pg_handle"))
+                                        ;(printer (c "pg_print"))
+                                        ;()
+  )
+
+(define-cproc xkb-apply-event-to-state (event::<xkb-event> state::<xkb-state>)
+  "return Scm_MakeInteger(xkb_apply_event_to_state(&event->state, state));")
+
+;;; fork:
+;;;
+(define-type <fork-event> "XkbActionMessageEvent*" #f
+  "SCM_XKB_MSG_EVENT_P" "SCM_XKB_MSG_EVENT" "new_xkb_msg_event")
+
+
+(define-cclass <fork-event>
+  "Scm_XkbEvent*"
+  "ScmXkbMessageEvent_class"
+  ;; cpa:
+  ()
+  ;; slot-spec
+  (
+   (type
+    :type <uint>
+    ;; <BYTE>
+    :c-name "type"
+    )
+   (detail
+    :type <key-code>
+    :c-name "keycode")
+
+   (press
+    :type <boolean>
+    :c-name "press")
+   (fork-time
+    ;; i tried to make <Time>  but only a type
+    ;;  <type> is not accessible ?? public?
+    
+    
+    ;; :type <time>                        ;i could transfer to <time> !!!
+    ;; :c-name "time"
+    :getter "return XTime_to_ScmTime((* (Time *)((char *)(obj->message) +1)));"
+
+    :setter #f
+    )
+   (time
+    ;; i tried to make <Time>  but only a type
+    ;;  <type> is not accessible ?? public?
+    
+    
+    ;; :type <time>                        ;i could transfer to <time> !!!
+    ;; :c-name "time"
+    :getter "return XTime_to_ScmTime(obj->time);"
+    :setter #f
+    )
+   ))
+
+
+; (define-cproc xkb-next-event (dpy::<Display*>)
+;   "XkbEvent*  xkbev;
+; xkbev = (XkbEvent*) malloc(sizeof(XkbEvent) );  // fixme: ALLOC
+; XNextEvent(dpy,(XEvent* ) &(xkbev->core));
+; /*i could return the type ....*/
+; return (new_xkb_event(xkbev));
+; ")
+
+;; fixme: this should make the right type already.
+(define-cproc x-next-event (dpy::<Display*>)
+  "XEvent*  xev = (XEvent*) malloc(sizeof(XEvent) );  // fixme: ALLOC
+// fprintf(stderr, \"x-next-event:\\n\");
+XNextEvent(dpy,xev);
+/*i could return the type ....*/
+//fprintf(stderr, \"x-next-event: %d\\n\", xev->type);
+return (new_x_event(xev));")
+
+
+(define-cproc x-event->xkb-event (event::<x-event>)
+  "XEvent* new_event =  (XEvent*) malloc(sizeof (XEvent));
+memcpy(new_event, event, sizeof (XEvent));
+return (new_xkb_event((XkbEvent*) new_event));")
+
+
+(define-cproc x-event->x-key-event (event::<x-event>)
+  "
+XEvent* new_event =  (XEvent*) malloc(sizeof (XEvent));
+memcpy(new_event, event, sizeof (XEvent));
+return (new_xkey_event((XKeyEvent*) new_event));")
+
+(define-cproc x-event-type (event::<x-event>) ;fixme
+  ;(return <integer> "event->type")
+  "return (Scm_MakeInteger(event->type));")
+
+;; todo:  Xcount events after read/flush/in buffer !!! So i can see errors!
+;; XEventsQueued
+(define-cproc x-events-queued (dpy::<Display*> mode::<int>)
+  (return <int> "XEventsQueued"))
+
+(define-enum QueuedAlready)
+(define-enum QueuedAfterFlush)
+(define-enum QueuedAfterReading)
+
+
+(define-cproc xkb-event-type (event::<xkb-event>) ;fixme
+  "return (Scm_MakeInteger(event->any.xkb_type));")
+
+
+
+(define-cproc xkb-event->xkb-message (event::<xkb-event>) ;fixme
+  "XkbActionMessageEvent* new_event =  (XkbActionMessageEvent*) malloc(sizeof (XkbActionMessageEvent));
+memcpy(new_event, event, sizeof (XkbActionMessageEvent));
+return (new_xkb_msg_event(new_event));")
+
+
+
+
+(define-cproc fork-event-serialize (event::<fork-event>)
+  "
+ScmObj uv = Scm_MakeU8Vector(6, 0);
+strncpy(SCM_U8VECTOR_ELEMENTS(uv), event->message + 1, 4);
+*(SCM_U8VECTOR_ELEMENTS(uv) + 4) = event->keycode;
+*(SCM_U8VECTOR_ELEMENTS(uv) + 5) = event->press;
+
+SCM_RETURN(uv);")
+
+(define-type <uvector> "ScmUVector*")
+
+(define-cproc fork-event-deserialize (bytes::<uvector>)
+  "
+XkbActionMessageEvent* event = (XkbActionMessageEvent*) malloc(sizeof (XkbActionMessageEvent));
+event->message[0] = 'f';
+strncpy(event->message + 1, SCM_U8VECTOR_ELEMENTS(bytes), 4);
+event->keycode = *(SCM_U8VECTOR_ELEMENTS(bytes) + 4);
+event->press = *(SCM_U8VECTOR_ELEMENTS(bytes) + 5);
+SCM_RETURN(new_xkb_msg_event(event));")
+
+
+(define-cproc xkb-message-message (event::<xkb-event>) ;fixme
+  "
+if ((1 << event->any.xkb_type)  == XkbActionMessageMask){
+return (SCM_MAKE_STR_COPYING(event->message.message));
+}
+else
+{
+ Scm_Error(\"xkb-message-message: the event is not of the type\");
+ } ;")
+
+;;; XKB tables:
+"#include <X11/extensions/XKBfile.h>"
+
+(define-cproc xkb-keycode-to-keysym (dpy::<Display*> key::<uint> group::<uint> shift::<uint>)
+  (return <uint> "XkbKeycodeToKeysym"))
+
+
+
+
+(define-cproc x-keysym-name (sym::<uint>)
+  "
+char* name = XkbKeysymText(sym,XkbCFile);
+if (strncmp(name,\"XK_\", 3) == 0) {
+   name += 3;
+
+   if (strcmp(name,\"Return\") == 0){
+      name=\"<cr>\";
+   } else if (strncmp(name,\"Meta_\",5) == 0){
+      name=\"^M\";
+   } else if (strncmp(name,\"Control_\",8) == 0){
+      name=\"^C\";
+   } else if (strncmp(name,\"Hyper_L\",6) == 0){
+      name=\"^H\";
+   } else if (strncmp(name,\"Mode_switch\",11) == 0){
+      name=\"MS\";
+   } else if (strncmp(name,\"comma\",5) == 0){
+      name=\",\";
+   } else if (strncmp(name,\"Shift_L\",7) == 0){
+      name=\"ShL\";
+   } else if (strncmp(name,\"Shift_R\",7) == 0){
+      name=\"ShR\";
+   } else if (strncmp(name,\"ISO_Group_Latch\",15) == 0){
+      name=\"Gr\";
+   };
+} else if (strcmp(name,\"NoSymbol\") == 0){
+   name=\"??\";
+};
+
+ScmObj result;
+/* SCM_MAKE_STR_IMMUTABLE  ...wrong*/
+result = SCM_MAKE_STR_COPYING(name);
+/* free (name); */
+return result;")
+
+;;; XKB Controls:
+
+(define-type <xkb-controls> "XkbControlsPtr" #f
+  "SCM_XKB_CONTROLS_P" "SCM_XKB_CONTROLS" "new_xkb_controls")
+
+(define-cclass <xkb-controls> "ScmXkbControls"
+  "ScmXkbControls_class"
+  ()					;cpa
+  (
+   (repeat-delay
+    :type <uint>
+    )
+   (repeat-interval
+    :type <uint>
+    )
+   )
+  )
+
+
+(define-enums
+  XkbAllControlsMask
+  XkbPerKeyRepeatMask
+  )
+(define-cproc xkb-control-keyrepeats (control::<xkb-controls> key::<key-code>)
+  "SCM_RETURN (Scm_MakeInteger( (control->per_key_repeat[key>>3] & (1<<(key&7))) >> (key&7)));"
+  )
+
+(define-cproc xkb-control-keyrepeats-set! (control::<xkb-controls> key::<key-code> repeat::<boolean>)
+  "unsigned char* kptr = &(control->per_key_repeat[key>>3]);
+   int bit = 1 << (key & 7);     /* int is faster? */
+   if (repeat){
+     *kptr |= bit;
+  } else {
+      *kptr &= ~ bit;
+  }
+SCM_RETURN (Scm_MakeInteger(*kptr));")
+
+
+
+
+;;;  XKB Names
+
+
+(define-type <xkb-names> "XkbNamesPtr" #f
+  "SCM_XKB_NAMES_P" "SCM_XKB_NAMES" "new_xkb_names")
+
+(define-cclass <xkb-names> "ScmXkbNames"
+  "ScmXkbNames_class"
+  ()					;cpa
+  (
+   (keycodes :type <atom>)              ; ??
+   (geometry :type <atom>)
+   (symbols :type <atom>)
+   (types :type <atom>)
+   (compat :type <atom>)
+   
+   ;; (radio-groups :type <atom>)     it is *Atom !!!!  see /usr/X11R6/include/X11/extensions/XKBstr.h
+   (phys-symbols :type <atom>)
+   
+   (num-keys :type <uint>)
+   (num-key-aliases :type <uint>)
+   (num-rg  :type <uint>)
+   
+   ;;
+   ; vmods
+   ; indicators
+   ; groups
+   ; keys
+   ; key_aliases
+   ; 
+   )
+  )
+
+
+
+
+
+(define-cproc xkb-name-group (names::<xkb-names> index::<uint>)
+  ;; make_atom
+  ;; fixme: check range!!!
+  "
+if ((index >= XkbNumKbdGroups) ||(index < 0))
+  Scm_Error(\"group index out of bounds\");
+
+return Scm_MakeInteger(names->groups[index]);")
+
+(define-enums
+  XkbNumIndicators
+  XkbNumKbdGroups
+  )
+
+(define-cproc xkb-name-indicator (names::<xkb-names> index::<uint>)
+  ;; make_atom
+  ;; fixme: check range!!!
+  "
+if ((index >= XkbNumIndicators) ||(index < 0))
+  Scm_Error(\"indicator index out of bounds\");
+
+return Scm_MakeInteger(names->indicators[index]);")
+
+
+(define-cproc xkb-name-key (names::<xkb-names> index::<uint>)
+  ;; make_atom
+  ;; fixme: check range!!!
+  "
+/*
+if ((index >= XkbNumIndicators) ||(index < 0))
+  Scm_Error(\"indicator index out of bounds\");
+*/
+
+char* name = (char*) (names->keys + index);
+int len = strnlen(name, 4);
+return Scm_MakeString(name, len, len, SCM_MAKSTR_COPYING);")
+
+
+
+;;;  client map
+
+(define-type <xkb-client-map> "XkbClientMapPtr"  "record on a key type "
+  "SCM_XKB_CLIENT_MAP_P" "SCM_XKB_CLIENT_MAP" "new_xkb_client_map")
+
+(define-cclass <xkb-client-map> "ScmXkbClient_Map"
+  "ScmXkbClient_Map_class"
+  ()					;cpa
+  (
+   (num-types :type <int>)              ; ??
+   ;; get the list of types
+   
+   (num-syms :type <int>)
+   ;; get the list of syms ?
+
+   
+   ;(map :type <atom>)
+   )
+  )
+
+
+
+;;;  server map
+(define-type <xkb-server-map> "XkbServerMapPtr"  "record on a key type "
+  "SCM_XKB_SERVER_MAP_P" "SCM_XKB_SERVER_MAP" "new_xkb_server_map")
+
+(define-cclass <xkb-server-map> "ScmXkbServer_Map"
+  "ScmXkbServer_Map_class"
+  ()					;cpa
+  (
+   (num-acts :type <int>)              ; ??
+   ;; get the list of types
+   (size-acts :type <int>)
+   ;; get the list of syms ?
+   ;(map :type <atom>)
+   )
+  )
+
+
+;;;  `Geometry'
+
+
+
+
+(define-type <xkb-geometry-key> "XkbKeyPtr"  "geometry key"
+  "SCM_XKB_GEOMETRY_KEY_P" "SCM_XKB_GEOMETRY_KEY" "new_xkb_geometry_key")
+
+(define-cclass <xkb-geometry-key> "ScmXkbGeometry_Key"
+  "ScmXkbGeometry_Key_class"
+  ()					;cpa
+  (
+   (name
+    ;;:type <int>)
+    ;; accessor
+    ;; XkbKeyPtr
+    :getter "
+XkbKeyNameRec key_name =  (obj->name) ;/*(char*)*/
+char* name = key_name.name;
+int len = strnlen(name, 4);
+return Scm_MakeString((char*) name, len, len, SCM_MAKSTR_COPYING);"
+    :setter #f
+    )
+
+
+   (gap  :type <short>)
+   (shape-index
+    :c-name "shape_ndx"
+    :type <short>)                       ;char
+
+   (color-index
+    :c-name "color_ndx"
+    :type <short>)
+   )
+  )
+
+
+(define-type <xkb-geometry-row> "XkbRowPtr"  "geometry row"
+  "SCM_XKB_GEOMETRY_ROW_P" "SCM_XKB_GEOMETRY_ROW" "new_xkb_geometry_row")
+
+(define-cclass <xkb-geometry-row> "ScmXkbGeometry_Row"
+  "ScmXkbGeometry_Row_class"
+  ()					;cpa
+  (
+   (top  :type <int>)
+   (left  :type <int>)
+   (vertical  :type <int>)                 ;
+   
+   (num-keys  :type <short>)                 ;
+   ;; read only
+   (sz-keys  :type <short>)
+   ;;(keys :
+   )
+  )
+
+
+
+(define-cproc xkb-geometry-nth-key (g::<xkb-geometry-row> i::<int>)
+  ;(returns <xkb-geometry-section>
+  ;"obj->geometry[i]"
+  "
+if ( (i >= g->num_keys)
+    || (i < 0))
+Scm_Error(\"index out of bounds\");
+
+return new_xkb_geometry_key(g->keys + i);")
+
+
+(define-type <xkb-geometry-section> "XkbSectionPtr"  "geometry section"
+  "SCM_XKB_GEOMETRY_SECTION_P" "SCM_XKB_GEOMETRY_SECTION" "new_xkb_geometry_section")
+
+(define-cclass <xkb-geometry-section> "ScmXkbGeometry_Section"
+  "ScmXkbGeometry_Section_class"
+  ()					;cpa
+  (
+   (name  :type <atom>)
+   (priority  :type
+              ;<uchar>
+              <int>
+              )              ;
+   (top  :type <int>)
+   (left  :type <int>)
+
+   (width  :type <short>)                 ;short !
+   (height  :type <short>)                ;short !
+   (angle  :type <short>)                 ;
+
+   
+   (num-rows  :type <short>)                 ;
+   (num-doodads  :type <short>)                 ;
+   (num-overlays  :type <short>)
+
+   ;; read only
+   (sz-rows  :type <short>)
+   (sz-doodads  :type <short>)
+   (sz-overlays  :type <short>)
+   )
+  )
+
+(define-cproc xkb-geometry-nth-row (g::<xkb-geometry-section> i::<int>)
+  ;(returns <xkb-geometry-section>
+  ;"obj->geometry[i]"
+  "
+if ( (i >= g->num_rows)
+    || (i < 0))
+Scm_Error(\"index out of bounds\");
+
+return new_xkb_geometry_row(g->rows + i);")
+
+
+(define-type <xkb-geometry> "XkbGeometryPtr"  "geometry"
+  "SCM_XKB_GEOMETRY_P" "SCM_XKB_GEOMETRY" "new_xkb_geometry")
+
+(define-cclass <xkb-geometry> "ScmXkbGeometry"
+  "ScmXkbGeometry_class"
+  ()					;cpa
+  (
+   (name  :type <atom>)
+   (width-mm  :type <int>)
+   (height-mm  :type <int>)
+
+   (sz-sections  :type <int>)           ;only access !
+
+
+   (num-sections :type <int>)
+   (num-colors  :type <int>)
+   (num-shapes  :type <int>)
+
+   (num-properties  :type <int>)
+   (num-doodads  :type <int>)
+   ;(num-  :type <int>)
+
+   (sections
+    :type <xkb-geometry-section>))
+  )
+
+
+(define-cproc xkb-geometry-nth-section (g::<xkb-geometry> i::<int>)
+  ;(returns <xkb-geometry-section>
+  ;"obj->geometry[i]"
+  "
+if ( (i >= g->num_sections)
+    || (i < 0))
+Scm_Error(\"index out of bounds\");
+
+return new_xkb_geometry_section(g->sections + i);")
+
+
+
+
+;;; XKB top `complete-descriptor' 
+(define-type <xkb-desc> "XkbDescPtr" #f
+  "SCM_XKB_DESC_P" "SCM_XKB_DESC" "new_xkb_desc") ;fixme! (g, dpy) !!!
+
+(define-cproc xkb-desc->controls (desc::<xkb-desc>)
+  "if (! desc->ctrls)
+#if 0
+    Scm_Error(\"desc doesn't contain the CONTROLS\");
+#else
+   XkbGetControls(desc->dpy, XkbAllControlsMask, desc); /* which?? */
+#endif
+
+ScmObj  controls = new_xkb_controls(desc->ctrls);
+((ScmXkbControls*)controls)->xkb_desc = desc_scm; /* fixme! */
+
+SCM_RETURN(SCM_OBJ(controls));")
+
+
+(define-cproc xkb-get-names (desc::<xkb-desc> which::<uint>)
+"Status s = XkbGetNames(desc->dpy, which, desc);
+return Scm_MakeInteger(s);")
+
+;; obsolete! & dangerous!
+(define-cproc xkb-get-geometry (desc::<xkb-desc>)
+  "
+Scm_Abort(\"xkb-get-geometry obsolete\");
+Status s = XkbGetGeometry(desc->dpy, desc);
+return Scm_MakeInteger(s);")
+
+
+(define-cproc xkb-desc->names (desc::<xkb-desc>) ;fixme: a slot?
+  "if (! desc->names)
+    Scm_Error(\"desc doesn't contain the NAMES\");
+
+ScmObj  names = new_xkb_names(desc->names);
+((ScmXkbNames*)names)->xkb_desc = desc_scm; /* fixme! */
+SCM_RETURN(SCM_OBJ(names));")
+
+
+(define-cclass <xkb-desc> "ScmXkbDesc"
+  "ScmXkbDesc_class"
+  ()					;cpa
+  (
+   (dpy ;:type <Display*>
+        :getter "return ((ScmObj) ((ScmXkbDesc*)OBJARG)->scm_display);"
+        :setter #f
+        )
+   (min-key-code
+    :type <key-code>
+    :c-name "min_key_code")
+   (max-key-code
+    :type <key-code>
+    :c-name "max_key_code")
+   (map                                 ;fixme: scheme function
+       :type <xkb-client-map>)
+   (server
+       :type <xkb-server-map>)
+   (geometry
+    :getter
+    "return xkb_get_geometry((ScmXkbDesc*) OBJARG);"
+    :setter #f
+    ;:c-name "geom"
+    ; :c-spec <c-spec>]
+    ;:type <xkb-geometry>
+    ;; fixme:    how to return the same?
+    )
+   
+   )
+                                        ;  ()					;fields  conninfo ...
+                                        ;  (allocator (c "new_pg_handle"))
+  ;(printer (c "pg_print"))
+                                        ;()
+  )
+
+
+;(define-cproc xkb-desc->client-map (desc::<xkb-desc>)
+;  "new_xkb_client_map(desc->map)"
+;  )
+
+
+
+
+;;; `types:'  should it be ptr or Rec ??
+(define-type <xkb-type> "XkbKeyTypePtr"  "record on a key type "
+  "SCM_XKB_TYPE_P" "SCM_XKB_TYPE" "new_xkb_type")
+
+(define-cclass <xkb-type> "ScmXkbType"
+  "ScmXkbType_class"
+  ()					;cpa
+  (
+   (name :type <atom>)              ; ??
+   ;(level-names :type <atom>)
+   (num-levels :type <int>)
+   (map-count :type <int>)
+   
+   ;(map :type <atom>)
+   )
+  )
+
+;; get the <xkb-type> object:
+;; fixme: the identity of types !!!     i should keep the scm objects in the scm client map!!
+(define-cproc xkb-client-map->type (map::<xkb-client-map> i::<int>)
+  "
+if ( (i >= map->num_types)
+    || (i < 0))
+Scm_Error(\"index out of bounds\");
+return (new_xkb_type(map->types+ i));")
+
+
+;;; mapping    modifiers -> level
+
+
+(define-cproc xkb-type->level (type::<xkb-type> i::<int>)
+  ;; get the list ....
+  "
+if ( (i >= type->num_levels)
+    || (i < 0))
+Scm_Error(\"index out of bounds\");
+return Scm_MakeInteger(type->level_names[i]);")
+
+
+
+;;; `level:'
+
+(define-type <xkb-mapping> "XkbKTMapEntryPtr"  "record on a key mapping "
+  "SCM_XKB_MAPPING_P" "SCM_XKB_MAPPING" "new_xkb_mapping")
+
+
+(define-cclass <xkb-mapping> "ScmXkbMapping"
+  "ScmXkbMapping_class"
+  ()					;cpa
+  (
+   (active :type <int>)              ; fixme:  <bool>
+   ;(level-names :type <atom>)
+   (level :type <int>)
+   ;(map-count :type <int>)
+   (mods :setter #f
+         :getter "SCM_LIST3(Scm_MakeInteger(obj->mods.mask), Scm_MakeInteger(obj->mods.real_mods), Scm_MakeInteger(obj->mods.vmods));")
+   ;(map :type <atom>)
+   )
+  )
+
+
+(define-cproc xkb-type->mapping (type::<xkb-type> i::<int>)
+  ;; get the list ....
+  "
+if ( (i >= type->map_count)
+    || (i < 0))
+Scm_Error(\"index out of bounds\");
+return new_xkb_mapping(type->map + i);")
+
+
+;; fixme: check level!!
+(define-cproc xkb-keysym-of (desc::<xkb-desc> keycode::<int> group::<int> level::<int>)
+"
+CHECK_KEYCODE_IN(desc, keycode);
+
+#if 0
+XkbSymMapPtr node = desc->map->key_sym_map + keycode; 
+if (node->groups <= group)
+#else
+if (XkbKeyNumGroups(desc, keycode) <= group)
+#endif
+  Scm_Error(\"The group number is invalid for this keycode\");
+
+
+KeySym sym = XkbKeySymEntry(desc, keycode, group, level);
+char* name = XKeysymToString(sym);
+return (name)?SCM_MAKE_STR_COPYING(name):SCM_FALSE;")
+
+
+;; i could make a uvector!
+(define-cproc xkb-modmap (desc::<xkb-desc> keycode::<int>)
+"
+CHECK_KEYCODE_IN(desc, keycode);
+return (Scm_MakeInteger(desc->map->modmap[keycode]));")
+
+(define-cproc xkb-modmap-set! (desc::<xkb-desc> keycode::<uint> value::<uint>)
+"
+CHECK_KEYCODE_IN(desc, keycode);
+desc->map->modmap[keycode] = value;
+return SCM_UNDEFINED;")
+
+
+
+
+
+
+;; `key-node'
+(define-type <xkb-key-node> "XkbSymMapPtr"  "info on types of a keyCode"
+  "SCM_XKB_KEY_NODE_P" "SCM_XKB_KEY_NODE" "new_xkb_key_node")
+
+(define-cclass <xkb-key-node> "ScmXkbKey_Node"
+  "ScmXkbKey_Node_class"
+  ()					;cpa
+  (
+   (groups :getter
+           "Scm_MakeInteger(XkbNumGroups(obj->group_info));"
+           :setter #f
+           )
+;;   /usr/X11R6/include/X11/extensions/XKBstr.h
+;    (group-handling
+;     :getter
+;     "Scm_MakeInteger(XkbOutOfRangeGroupAction(obj->group_info));"
+;     :setter #f
+;     )
+   
+   (width :type <int>)              ; ??
+   (offset :type <int>)
+   )
+  )
+
+;; xkb-key-type
+(define-cproc xkb-node-group->type (node::<xkb-key-node> group::<int>)
+ "if ((group > 3) || (group < 0))
+   Scm_Error(\"group index out of bounds: %d\", group); 
+return (Scm_MakeInteger(node->kt_index[group]));")
+
+;; alternative:
+(define-cproc xkb-key-type (desc::<xkb-desc> keycode::<int> group::<int>)
+  "
+if ( (group >= XkbNumKbdGroups)
+    || (group < 0))
+Scm_Error(\"group out of bounds\");
+
+CHECK_KEYCODE_IN(desc, keycode);
+#if 1
+return Scm_MakeInteger(XkbKeyTypeIndex(desc, keycode, group));
+#endif
+")
+
+
+;; fixme!
+(define-cproc xkb-keycode->node (desc::<xkb-desc> keycode::<uint>)
+  "CHECK_KEYCODE_IN(desc, keycode);
+return (new_xkb_node(desc->map->key_sym_map + keycode));")
+
+;;xkb-client-map->keysym
+
+(define-cproc xkb-index->keysym (map::<xkb-client-map> index::<int>)
+  ;;(return <int> "map->syms()"
+  "if ((index > map->num_syms) || (index < 0))
+     Scm_Error(\"index out of bounds\", index);
+return (Scm_MakeInteger(*(map->syms + index)));")
+
+
+;; fixme: map ?
+(define-cproc xkb-client-map-set-keysym! (map::<xkb-client-map> index::<int> keysym::<uint>)
+  ;;(return <int> "map->syms()"
+  "if ((index > map->num_syms) || (index < 0))
+     Scm_Error(\"index out of bounds\", index);
+/* i would like to get   map->xkb_desc->verbose ! but i don't have a back-pointer to the desc !*/
+if (0)
+   Scm_Warn(\"on index %d: overwriting %d -> %d\\n\", index, map->syms[index], keysym);
+
+map->syms[index] = keysym;
+return SCM_UNDEFINED;")
+
+;;
+(define-cproc xkb-change-keycode (desc::<xkb-desc> keycode::<uint>) ;what: action sym 
+  "XkbMapChangesRec changes = {0};
+/* /p/xfree-4.3.99.901-r4/work/xc/lib/X11/XKBSetMap.c */
+
+CHECK_KEYCODE_IN(desc, keycode);
+
+changes.changed = XkbKeySymsMask | XkbKeyActionsMask | XkbModifierMapMask;
+
+changes.first_key_sym = keycode;
+changes.num_key_syms = 1;
+
+
+changes.first_key_act = keycode;
+changes.num_key_acts = 1;
+
+
+changes.first_modmap_key = keycode;
+changes.num_modmap_keys = 1;
+
+return SCM_MAKE_BOOL(XkbChangeMap(desc->dpy, desc, &changes));")
+
+(define-cproc xkb-map-switch (desc::<xkb-desc> first::<uint> second::<uint>)
+  ;; switch the 2 keycodes:
+  ;; 
+  ;; Nodes
+  ;; modmap
+  ;; actions
+  ;;
+  "
+CHECK_KEYCODE_IN(desc, first);
+CHECK_KEYCODE_IN(desc, second);
+
+XkbClientMapPtr map = desc->map;
+
+XkbSymMapRec temp = map->key_sym_map[first];
+ map->key_sym_map[first] =  map->key_sym_map[second];
+ map->key_sym_map[second] = temp;
+
+int temp_mm = map->modmap[first];
+map->modmap[first] = map->modmap[second];
+map->modmap[second] = temp_mm;
+
+/* actions */
+
+/* Scm_Warn(\"now ->server\\n\"); */
+
+XkbServerMapPtr server = desc->server;
+
+/* pointer at actions: their number is given in the client map!!!*/
+
+int temp_i = server->key_acts[first];
+server->key_acts[first] = server->key_acts[second];
+server->key_acts[second] = temp_i;
+
+
+/* Scm_Warn(\"now vmodmap\\n\"); */
+
+#if 0
+/* fixme! */
+short temp_s = server->vmodmap[first];
+server->vmodmap[first] = server->vmodmap[second];
+server->vmodmap[second] = temp_s;
+#endif
+
+/* Scm_Warn(\"now behaviour\\n\"); */
+XkbBehavior temp_b = server->behaviors[first];
+server->behaviors[first] = server->behaviors[second];
+server->behaviors[second] = temp_b;
+
+/* Scm_Warn(\"ok\\n\"); */
+return SCM_UNDEFINED;")
+
+;; lets first expose the very low level:
+(define-cproc xkb-resize-keysyms (desc::<xkb-desc> keycode::<uint> needed::<int>)
+  "
+CHECK_KEYCODE_IN(desc, keycode);
+KeySym* result = XkbResizeKeySyms(desc, keycode, needed);
+if (! result)
+    Scm_Error(\"memory allocation failed\");
+
+return SCM_UNDEFINED;")
+
+;; n-groups::<int> groups::<int> new-types-in
+(define-cproc xkb-change-types-of-keys (desc::<xkb-desc> keycode::<uint> types)
+  "
+CHECK_KEYCODE_IN(desc, keycode);
+
+/*Check that TYPES is a list of types, and get the lenght */
+if (!SCM_LISTP(types))
+    Scm_Error(\"wrong type: expected a List (of <xkb-type>s)\");
+
+ScmObj p;
+int lenght = 0;
+int c_types[XkbNumKbdGroups];
+
+SCM_FOR_EACH(p, types){
+if (
+/*useless:  SCM_PAIRP(p) &&  */
+/* I make it easy first!*/
+/* SCM_XKB_TYPE_P(Scm_Car(p))*/
+SCM_INTEGERP(Scm_Car(p))
+)
+  {
+    c_types[lenght++] = Scm_GetInteger(Scm_Car(p));
+    /* The type must be in the client map!!!  And get its index! */
+  } else Scm_Error(\"wrong type: expected a list of <XKB-TYPE>s\");
+}
+
+
+/* The bitmask is full. Sort-of*/
+
+int mask = XkbGroup1Mask| XkbGroup2Mask |XkbGroup3Mask |XkbGroup4Mask;
+
+Status s = XkbChangeTypesOfKey(desc, keycode, lenght, mask, c_types, NULL);
+
+if (s==Success)
+    return SCM_TRUE;
+else Scm_Error(\"(xkb-change-types-of-keys) error occured\");
+")
+
+;;; `Actions:'
+
+;; i will keep the XkbAction in scheme GC memory.
+;; Therefore i need only the final types !!!
+
+
+(define-type <xkb-mod-action> "XkbModAction*" "action bound to keyCode")
+
+(define-cclass <xkb-mod-action> "ScmXkbModAction"
+  "Scm_XkbModActionClass"
+  ()					;cpa
+  (
+   ;; fixme:  <uchar>
+   (type :type <uint8>)
+   (flags :type <uint8>)
+   (mask :type <uint8>)
+   (real_mods :type <uint8>)
+   (vmods1 :type <uint8>)
+   (vmods2 :type <uint8>)
+   )
+  )
+
+
+(define-type <xkb-group-action> "XkbGroupAction*" "action bound to keyCode")
+
+(define-cclass <xkb-group-action> "ScmXkbGroupAction"
+  "Scm_XkbGroupActionClass"
+  ()					;cpa
+  (
+   ;; fixme:  <uchar>
+   (type :type <uint8>)
+   (flags :type <uint8>)
+   (group_XXX :type <int8>)
+   )
+  )
+
+
+;; keycode
+;; fixme: this should ensure that the server map is present!
+(define-cproc xkb-key-has-actions (desc::<xkb-desc> keycode::<uint>)
+  ;; CHECK_KEYCODE_IN(desc, keycode);
+  (return <boolean> "XkbKeyHasActions"))
+
+
+;; keycode
+(define-cproc xkb-key-num-actions (desc::<xkb-desc> keycode::<uint>)
+  ;; CHECK_KEYCODE_IN(desc, keycode);
+  ;; fixme:
+  ;; (return <uint> "XkbKeyNumActions")
+  "
+if (! XkbKeyHasActions(desc, keycode))
+ {
+ return SCM_MAKE_INT(0); /* fixme: should raise error?*/
+ }
+else return SCM_MAKE_INT(XkbKeyNumActions(desc, keycode));")
+
+(define-cproc xkb-resize-key-actions (desc::<xkb-desc> keycode::<uint> needed::<int>)
+  "
+CHECK_KEYCODE_IN(desc, keycode);
+XkbAction* result = XkbResizeKeyActions(desc, keycode, needed);
+if (! result)
+    Scm_Error(\"memory allocation failed\");
+
+/*as a hack i make the action a mod-action:  fixme:  NoAction would be better! */
+result->type = XkbSA_NoAction;		/* SetMods */
+return SCM_UNDEFINED;")
+
+
+(define-enum XkbSA_SetMods)
+(define-enum XkbSA_LatchMods)
+(define-enum XkbSA_LockMods)
+
+;; flags
+(define-enum XkbSA_UseModMapMods)
+(define-enum XkbSA_ClearLocks)
+(define-enum XkbSA_LatchToLock)
+(define-enum XkbSA_LockNoUnlock)
+(define-enum XkbSA_LockNoLock)
+
+(define-enum XkbSA_GroupAbsolute)
+
+
+(define-enum XkbSA_SetGroup)
+(define-enum XkbSA_LatchGroup)
+(define-enum XkbSA_LockGroup)
+
+; type:
+(define-enum XkbSA_MovePtr)
+(define-enum XkbSA_ISOLock)
+(define-enum XkbSA_LockControls)
+(define-enum XkbSA_ActionMessage)
+(define-enum XkbSA_RedirectKey)
+(define-enum XkbSA_DeviceBtn)
+
+(define-enum XkbSA_Terminate)
+(define-enum XkbSA_SwitchScreen)
+
+
+;; flags
+(define-enum XkbSA_NoAcceleration)
+(define-enum XkbSA_MoveAbsoluteX)
+(define-enum XkbSA_MoveAbsoluteY)
+
+;; types:
+(define-enum XkbSA_LockPtrBtn)
+(define-enum XkbSA_SetPtrDflt)
+(define-enum XkbSA_PtrBtn)
+;(define-enum XkbSA_)
+
+
+
+
+;; return the action at the coordinates. Check before!
+(define-cproc xkb-key-action (desc::<xkb-desc> keycode::<uint> index::<uint>)
+  "CHECK_KEYCODE_IN(desc, keycode);
+if (!XkbKeyHasActions(desc, keycode))
+   Scm_Error(\"The keycode %d doesn't have actions!\", keycode);
+
+if (index >= XkbKeyNumActions(desc, keycode))
+   Scm_Error(\"the keycode has less actions\");
+
+XkbAnyAction* a = (XkbAnyAction*) XkbKeyAction(desc, keycode, index);
+
+return Scm_MakeXkbAction(a);")
+
+
+
+(define-cproc xkb-key-set-action (desc::<xkb-desc> keycode::<uint> index::<uint> action)
+  "CHECK_KEYCODE_IN(desc, keycode);
+if (!XkbKeyHasActions(desc, keycode))
+   Scm_Error(\"The keycode %d doesn't have actions!\", keycode);
+
+if (index >= XkbKeyNumActions(desc, keycode))
+   Scm_Error(\"the keycode has less actions\");
+
+/* Check that action is a list of 8 numbers ... */
+if (!SCM_LISTP(action) || (Scm_Length(action) != 8))
+   Scm_Error (\"action is not an 8-list\");
+
+
+ScmObj p;
+
+SCM_FOR_EACH(p, action){
+if (! SCM_INTP(Scm_Car(p))  || (SCM_INT_VALUE(Scm_Car(p)) >255)
+     || (SCM_INT_VALUE(Scm_Car(p)) < 0))
+Scm_Error(\"an item in the action list is not a suitable number.\"); /*,Scm_Car(p)*/
+}
+
+/*If all is ok, we can ovewrite: */
+
+XkbAnyAction* a = (XkbAnyAction*)  XkbKeyActionsPtr(desc, keycode) + index;
+
+unsigned char* b = (unsigned char*) a;
+
+
+SCM_FOR_EACH(p, action){
+   *(b++) = SCM_INT_VALUE(Scm_Car(p));
+}
+
+XkbAction* c = XkbKeyAction(desc,keycode, index);
+if (0)
+Scm_Warn(\"at index %d, type is now %d\", index, c->type);
+
+return Scm_MakeXkbAction(a);")
+
+
+
+(define-cproc xkb-key-action-entry (desc::<xkb-desc> keycode::<uint> group::<uint> level::<uint>) ; reversed wrt C api!
+  "CHECK_KEYCODE_IN(desc, keycode);
+if (!XkbKeyHasActions(desc, keycode))
+   Scm_Error(\"The keycode %d doesn't have actions!\", keycode);
+if (XkbKeyNumGroups(desc, keycode) <= group)
+  Scm_Error(\"The group number %d is invalid for this keycode %d\", group, keycode);
+
+/* fixme: i should check the level for the type */
+
+XkbAnyAction* a = (XkbAnyAction*) XkbKeyActionEntry(desc, keycode, level, group);
+return Scm_MakeXkbAction(a);")
+
+
+;;; vmods
+
+(define-cproc xkb-get-vmods (desc::<xkb-desc> index::<uint>)
+  "
+if (index >= XkbNumVirtualMods)
+Scm_Error(\"index out of bounds\", index);
+
+return (Scm_MakeInteger(desc->server->vmods[index]));")
+
+
+
+
+;;; Compat
+(define-cproc xkb-compat-count (desc::<xkb-desc>)
+  "return Scm_MakeInteger(desc->compat->num_si);")
+
+
+(define-cproc xkb-get-interpret (desc::<xkb-desc> index::<uint>)
+  "if (index > desc->compat->num_si) /* > 0*/
+Scm_Error(\"index %d out of bound %d\", index, desc->compat->num_si);
+
+XkbSymInterpretPtr p = desc->compat->sym_interpret + index;
+
+   return Scm_Cons(Scm_MakeInteger(p->sym),
+           SCM_LIST5(Scm_MakeInteger(p->flags),
+                     Scm_MakeInteger(p->match),
+                     Scm_MakeInteger(p->mods),
+                     Scm_MakeInteger(p->virtual_mod),
+                     Scm_MakeXkbAction(&(p->act))));")
+
+
+
+(define-cproc xkb-get-explicit (desc::<xkb-desc> keycode::<uint>)
+  "CHECK_KEYCODE_IN(desc, keycode);
+if (!desc->server->explicit)
+Scm_Error(\"desc->server->explicit is not available, you should request it first.\");
+
+return Scm_MakeInteger(desc->server->explicit[keycode]);")
+
+(define-cproc xkb-set-explicit! (desc::<xkb-desc> keycode::<uint> value::<uint>) ;<uchar> ?
+  "CHECK_KEYCODE_IN(desc, keycode);
+if (value>255)
+   Scm_Error(\"the value is out of bounds %d\", value);
+if (!desc->server->explicit)
+   Scm_Error(\"desc->server->explicit is not available, you should request it first.\");
+
+desc->server->explicit[keycode]= value;
+
+XkbMapChangesRec changes = {0};
+changes.changed = XkbExplicitComponentsMask;
+
+changes.first_key_explicit = keycode;
+changes.num_key_explicit = 1;
+
+
+return SCM_MAKE_BOOL(XkbChangeMap(desc->dpy, desc, &changes));")
+
+
+(define-enums
+  XkbExplicitInterpretMask
+  XkbExplicitVModMapMask
+  XkbAllExplicitMask
+  )
+
+
+
+;;; Misc
+;(define-cproc xkb-translate-keysym ()
+(define-cproc xkb-lookup-keybinding (dpy::<Display*> sym::<uint> state::<uint>) ;<keysym>
+  "
+#define max_binding_len 100
+static char buffer[max_binding_len];
+int extra_rtrn;
+XkbLookupKeyBinding(dpy, sym, state, buffer, max_binding_len, &extra_rtrn);
+
+#if 0
+ if (extra_rtrn)
+malloc (extra_rtrn + max_binding_len)
+& repeat:
+XkbLookupKeyBinding(dpy, sym, state, buffer, max_binding_len, &extra_rtrn);
+#endif
+
+return Scm_MakeString((char*) buffer, strlen(buffer), strlen(buffer), SCM_MAKSTR_COPYING);")
+
+
+;(define-enum XkbUseCoreKbd)
+
+
+;; this is wrong: it forces the X server to reread files & compose the xkb....
+(define-cproc xkb-get-keyboard (display::<Display*> which::<uint> device::<uint>)
+  "return new_xkb_desc(XkbGetKeyboard(display, which, device), (ScmXDpy*) display_scm);"
+  ;(return <xkb-desc> "XkbGetKeyboard")
+  )
+
+;; i need refresh!
+(define-cproc xkb-get-desc* (dpy::<Display*> which::<uint> device::<uint>)
+  "
+ScmXDpy* sd = (ScmXDpy*) dpy_scm;
+
+/*fixme: i should check, if all of which was requested!*/
+if (sd->xkb_desc)
+   return (ScmObj)sd->xkb_desc;
+
+#if 1
+  XkbDescRec* desc = XkbGetMap(dpy, which, device);
+#else
+XkbDescRec* desc = XkbAllocKeyboard();
+#endif
+
+
+XkbGetKeyExplicitComponents(desc->dpy, desc->min_key_code,
+                                   desc->max_key_code - desc->min_key_code,
+                                   desc);
+
+XkbGetCompatMap(dpy,XkbAllCompatMask, desc);
+
+#if 0
+/*  desc has a link to its display, by xkb*/
+desc->display = dpy;   /* This should point at the Scm display. This one can be gone. */
+/* device_spec is filled */
+#endif
+
+if ((!desc->server) ||(!desc->server->vmodmap))
+Scm_Error(\"desc->server->vmodmap is not here\\n\");
+
+return (ScmObj) (sd->xkb_desc = (ScmXkbDesc*) new_xkb_desc(desc, (ScmXDpy*) dpy_scm));")
+
+
+
+;;; Components:
+(define-type <xkb-component-list> "XkbComponentListRec*")
+;; no constructor!
+
+(define-cclass <xkb-component-list> "ScmXkbComponentListRec"
+  "Scm_XkbComponentListRecClass"
+  ()					;cpa
+  (
+   (num-keymaps :type <int>)
+   (num-keycodes :type <int>)
+   (num-types :type <int>)
+   (num-compat :type <int>)
+   (num-symbols :type <int>)
+   (num-geometry :type <int>)
+   ))
+
+(define-cproc xkb-get-keymap-name (clist::<xkb-component-list> n::<uint>)
+  "return Scm_charPtr_Box(clist->keymaps[n].name);")
+
+(define-cproc xkb-list-components (display::<Display*> device::<uint> max::<uint>
+                                                   keymap::<const-char*>
+                                                   keycodes::<const-char*>
+                                                   types::<const-char*>
+                                                   compat::<const-char*>
+                                                   symbols::<const-char*>
+                                                   geometry::<const-char*>
+                                                   )
+  "
+XkbComponentNamesRec comp;
+/* comp = { keymap, keycodes, types, compat, symbols, geometry}; */
+
+/* fixme: */
+/*(const char*) */
+comp.keymap = (char*) keymap;
+comp.keycodes = keycodes;
+comp.types = types;
+comp.compat = compat;
+comp.symbols = symbols;
+comp.geometry = geometry;
+
+XkbComponentListPtr clist = XkbListComponents(display, XkbUseCoreKbd,
+      (const XkbComponentNamesRec*) &comp, &max);
+
+return Scm_MakeXkbComponentListRec(clist);"
+;  "return new_xkb_desc(XkbGetKeyboard(display, which, device), display);"
+  ;(return <xkb-desc> "XkbGetKeyboard")
+  )
+
+
+
+
+(define-cproc xkb-get-map (display::<Display*> which::<uint> device::<uint>)
+  "return (new_xkb_desc(XkbGetMap(display, which, device), (ScmXDpy*) display_scm));"
+  ;(return <xkb-desc> "XkbGetMap")
+  )
+
+(define-cproc xkb-get-modifier-map (display::<Display*> first::<uint> num::<uint> desc::<xkb-desc>) ; fixme: should be `xkb-get-modifier-map!'
+  (return <Status> "XkbGetKeyModifierMap"))
+
+(define-cproc xkb-get-vmodifier-map (display::<Display*> first::<uint> num::<uint> desc::<xkb-desc>) ; fixme: should be `xkb-get-modifier-map!'
+  (return <Status> "XkbGetKeyVirtualModMap"))
+
+
+
+(define-enum XkbNumRequiredTypes)
+
+(define-enums
+  ;; xkb-get-keyboard
+  XkbServerMapMask
+  XkbClientMapMask
+  XkbControlsMask
+  XkbNamesMask
+  XkbAllComponentsMask
+  
+  ;; Get Map
+  XkbAllMapComponentsMask
+
+  ;;
+  XkbKeyTypesMask
+  XkbKeySymsMask
+  XkbModifierMapMask
+  )
+
+(define-cproc xkb-update-map (display::<Display*> which::<uint> desc::<xkb-desc>)
+  (return <Status> "XkbGetUpdatedMap"))
+
+
+;;; names:
+
+(define-enums
+  XkbAllNamesMask
+  ;; XkbGroupNamesMask
+  ; XkbTypesNameMask
+  ; XkbPhysSymbolsNameMask
+  ; 
+  XkbNumVirtualMods
+  )
+
+"#define scm_make_status Scm_MakeInteger"
+
+;; fixme: xkb-get-names
+;(define-cproc xkbd-get-names (desc::<xkb-desc> which::<uint>)
+;   "return scm_make_status(XkbGetNames(desc->dpy, which, desc));")
+
+
+;;;  fixme: polymor  desc or names !
+(define-cproc xkb-vmod-name (desc::<xkb-desc> index::<uint>)
+  ;; make_atom
+  ;; fixme: check range!!!
+  "
+if ((index >= XkbNumVirtualMods) ||(index < 0))
+  Scm_Error(\"vmod index out of bounds\");
+return Scm_MakeInteger(desc->names->vmods[index]);")
+
+
+
+(define-cproc xkb-get-vmodifier (desc::<xkb-desc> keycode::<uint>)
+  "
+CHECK_KEYCODE_IN(desc, keycode);
+if (! desc->server)
+       Scm_Error(\"xkb-get-vmodifier: the desc->server structure not ready\");
+
+/* X had bugs */
+if (! desc->server->vmodmap)
+/*Get it now: */
+{
+#if DEBUG
+  Scm_Warn(\"xkb-get-vmodifier: the desc->server->vmodmap structure not ready\");
+#endif
+
+ XkbGetKeyVirtualModMap(desc->dpy, desc->min_key_code,
+                                   desc->max_key_code - desc->min_key_code,
+                                   desc);
+}
+/*
+fprintf (stderr, \"xkb-get-vmodifier: %d\\n\", keycode);
+fprintf (stderr, \"xkb-get-vmodifier: %d\\n\", *((desc->server->vmodmap) + keycode));
+*/
+return Scm_MakeInteger(*((desc->server->vmodmap) + keycode));")    ; - desc->min_key_code
+
+(define-cproc xkb-get-controls (dpy::<Display*> which::<uint32> desc::<xkb-desc>)
+  (return <Status> "XkbGetControls"))
+
+(define-cproc xkb-set-controls (dpy::<Display*> which::<uint32> desc::<xkb-desc>)
+  (return <Status> "XkbSetControls"))
+
+
+
+
+;;; Fork
+;; fixme:  inconsistence in naming!
+(define-type <archived-keyevent> "archived_event*" #f
+  SCM_ARCHIVED_KEYEVENT_P
+  SCM_ARCHIVED_KEYEVENT
+  ;;"SCM_EXACTP" "Scm_GetInteger" "Scm_MakeInteger"
+  Scm_Make_archived_keyevent
+  )
+
+
+;; SCM_KEYBUTTONPOINTER_EVENT
+(define-cclass <archived-keyevent>      ;qualifier ???  :base  :built-in
+  "archived_event"                       ;Scm_Xkb_event
+  "Scm_archived_event_Class"
+  ;;"ScmXKeyEvent_class"
+  ()
+  ((key :type <key-code>)
+   (forked  :type <key-code>)
+   (time
+    :getter "XTime_to_ScmTime(obj->time);"
+    :setter #f)
+   (press :type <int>)))
+
+
+;; Fixme: define `Scmarchived_event_finalize' !
+(define-cproc fork-get-last-events (dpy::<Display*> device::<uint> count::<uint>)
+  "
+int returned;
+archived_event *events; /* = alloca(sizeof(archived_event) * count); */
+
+Bool status = ForkGetLastEvents(dpy, device, count, &returned, &events);
+/* make a scheme vector of the events ??? */
+/* if status */
+
+Scm_Warn(\"got %u events\\n\", returned);
+
+ScmObj vector = Scm_MakeVector(returned, SCM_FALSE);
+/* fixme:  check it!  */
+int i;
+
+archived_event* event = events;
+
+// client side events:
+XKeyEvent* xkbev;
+
+for(i=0; i< returned; i++, event++){
+/* make a list of 4 values   time keycode fork press */
+ Scm_Warn(\"%d: %u %u @ %lu (%s)\", i, event->key,event->forked,
+ event->time,
+ event->press?\"press\":\"release\");
+#if 0
+     xkbev = malloc(sizeof(XKeyEvent));
+     xkbev->type  = event->u.u.type;
+     xkbev->state = event->u.keyButtonPointer.state;
+     xkbev->time  = event->u.keyButtonPointer.time;
+     xkbev->keycode = event->u.u.detail;
+     Scm_VectorSet(SCM_VECTOR(vector), i, new_xkey_event(xkbev));
+#endif
+}
+return Scm_Values2(vector, Scm_MakeInteger(returned));")
+
+
+
+(define-cproc xfork-configure (dpy::<Display*> device::<uint> what::<uint> value::<uint>)
+  "
+if (ForkConfigure(dpy, device, what, value)!= Success)
+   Scm_Error(\"%s failed\", __FUNCTION__);
+SCM_RETURN(SCM_TRUE);")
+
+(define-cproc xfork-get-configure (dpy::<Display*> device::<uint> what::<uint>)
+"int res;
+if (ForkGetConfigure(dpy, device, what, &res) != Success)
+   Scm_Error(\"%s failed\", __FUNCTION__);
+SCM_RETURN(Scm_MakeInteger(res));")
+
+
+  ;(return <int> "ForkGetConfigure"))
+
+
+;; just a wrapper:
+(define-cproc xfork-configure-key (dpy::<Display*> device::<uint> what::<uint> keycode::<key-code>
+						   value::<uint>)
+  "
+if (ForkConfigureKey(dpy, device, what, keycode, value)!= Success)
+   Scm_Error(\"%s failed\", __FUNCTION__);
+SCM_RETURN(SCM_TRUE);")
+
+(define-cproc xfork-get-configure-key (dpy::<Display*> device::<uint> what::<uint> keycode::<key-code>)
+"int res;
+if (ForkGetConfigureKey(dpy, device, what, keycode, &res) != Success)
+   Scm_Error(\"%s failed\", __FUNCTION__);
+SCM_RETURN(Scm_MakeInteger(res));")
+
+
+
+;; twin:
+(define-cproc xfork-get-configure-key-twin (dpy::<Display*> device::<uint>
+							    what::<uint> keycode::<key-code>
+							    twin::<key-code>)
+"int res;
+if (ForkGetConfigureKeyTwin(dpy, device, what, keycode, twin, &res) != Success)
+   Scm_Error(\"%s failed\", __FUNCTION__);
+SCM_RETURN(Scm_MakeInteger(res));")
+
+
+(define-cproc xfork-configure-key-twin (dpy::<Display*> device::<uint> what::<uint>
+							keycode::<key-code> twin::<key-code> value::<uint>)
+  "
+if (ForkConfigureKeyTwin(dpy, device, what, keycode, twin, value)!= Success)
+   Scm_Error(\"%s failed\", __FUNCTION__);
+SCM_RETURN(SCM_TRUE);")
+
+
+
+
+;(define-cproc xfork-get-configure-key (dpy::<Display*> what::<uint> keycode::<key-code>)
+;  (return <int> "XkbGetConfigureKey"))
+
+
+;; KeyCode
+
+; (define-cproc xkb-set-fork (dpy::<Display*> device::<uint> code::<uint> fork::<uint>) ;<char>
+;   ;; XkbConfigureForkKey(dpy, deviceSpec, Xkb_configure_key_fork, code, fork); /*  Boll -> int -> int16 */
+;   ;; typedef unsigned char KeyCode;
+;   "
+; if (fork>255) Scm_Error(\"xkb-set-fork: fork outside limits (%d > 255)\", fork);
+; if (code>255) Scm_Error(\"xkb-set-fork: code outside liits (%d > 255)\", code);
+
+; unsigned char char_fork = fork;
+; unsigned char char_code = code;
+; return (SCM_MAKE_BOOL(XkbSetFork(dpy, device, char_code, char_fork)));"
+;   ;(return <boolean> "XkbSetFork")
+;   )
+
+
+
+(define-enums
+  fork_configure_last_events
+  ;; 
+  fork_configure_overlap_limit
+  fork_configure_total_limit
+  fork_configure_repeat_limit
+  ;;
+  fork_configure_key_fork
+  fork_configure_key_fork_repeat
+  fork_configure_repeat_consider_forks
+  fork_configure_debug
+
+  fork_configure_switch
+  fork_configure_clear_interval
+
+
+  fork_server_dump_keys
+  fork_client_dump_keys
+  )
+
+
+
+
+
+
+
+;;; XTest:
+(define-type <cursor> "Cursor" #f
+  ;; int?
+  ;;(define-type <int32>   "int" "C integer"
+  "SCM_EXACTP" "Scm_GetInteger" "Scm_MakeInteger"
+  )
+
+
+#;(define-cproc xtest-query-extension (dpy::<Display*>)
+  "int event_base, error_base, major_version, minor_version;
+Bool test = XTestQueryExtension(dpy, &event_base, &error_base, &major_version, &minor_version);
+return Scm_Values5(
+                   Scm_MakeInteger(test),
+                   Scm_MakeInteger(event_base),
+                   Scm_MakeInteger(error_base),
+                   Scm_MakeInteger(major_version),
+                   Scm_MakeInteger(minor_version)
+                   );")
+
+
+#;(define-cproc xtest-compare-cursor-with-window (dpy::<Display*> window::<Window> cursor::<cursor>)
+  (return <boolean> "XTestCompareCursorWithWindow"))
+  
+
+
+
+
+
+
+;;; dpms
+
+
+;; Copying from gauche-x !!
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 7 - Graphics Context Functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-cproc new-null ()
+  "SCM_RETURN( Scm_MakePointer( 0 ) );")
+
+(define-cproc XCreateGC (display::<Display*>
+			 d::<Window>
+			 valuemask::<ulong>
+			 values::<XGCValues*>)
+  (return <GC> "XCreateGC"))
+
+;; 7.2 - Using Graphics Context Convenience Routines
+
+(define-cproc XSetForeground (display::<Display*> gc::<GC> foreground::<ulong>)
+  (return <Status> "XSetForeground"))
+
+(define-cproc XSetBackground (display::<Display*> gc::<GC> background::<ulong>)
+  (return <Status> "XSetBackground"))
+
+
+
+;;;  Gravity:   todo: Window should have  `display' attached!
+(define-cproc x-set-bit-gravity (display::<Display*> w::<Window> gravity::<ulong>)
+  "
+XSetWindowAttributes attributes = {0};
+attributes.bit_gravity = gravity;
+XChangeWindowAttributes(display, w, CWBitGravity, &attributes);")
+
+(define-cproc x-set-win-gravity (display::<Display*> w::<Window> gravity::<ulong>)
+  "
+XSetWindowAttributes attributes = {0};
+attributes.win_gravity = gravity;
+XChangeWindowAttributes(display, w, CWWinGravity, &attributes);")
+
+
+
+(define-cproc XSetFont (display::<Display*> gc::<GC> font::<Font>)
+  (return <Status> "XSetFont"))
+
+
+;; 8.6 - Drawing Text
+(define-cproc XDrawString (display::<Display*> d::<Drawable> gc::<GC> x::<int> y::<int>
+					       string::<const-char*> length::<int>)
+  (return <Status> "XDrawString"))
+
+
+
+;;
+"#define Scm_Init_xlib  internal_init_xlib"
+
+
+
+
+
+
+
+

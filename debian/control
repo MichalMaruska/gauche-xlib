@@ -1,0 +1,14 @@
+Source: gauche-xlib
+Section: interpreters
+Priority: extra
+Maintainer: Michal Maruska <michal@ruska.it>
+Build-Depends: debhelper (>= 5), autotools-dev, gauche-dev, libx11-dev
+Recommends: fork-tools
+Standards-Version: 3.7.2
+
+Package: gauche-xlib
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, gauche, libx11-6, gauche-mmc, fork-tools
+Description: gauche binding to libX11
+ This binding to libX11 is intented to monitor & configure input devices.
+ Few Window requests are available.

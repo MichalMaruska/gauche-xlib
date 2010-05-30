@@ -1,0 +1,6 @@
+gauche-xlib (1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Michal Maruska <michal@ruska.it>  Fri, 12 Oct 2007 17:39:12 +0400
+

@@ -1,0 +1,44 @@
+
+
+;power levels
+
+(define-cproc dpms-query-extension (display::<Display*>)
+  "int event_base, error_base;
+Bool status = DPMSQueryExtension(display, &event_base, &error_base);
+return Scm_MakeInteger(status);")
+
+
+
+(define-cproc dpms-get-version (display::<Display*>)
+  "int major_version; int minor_version;
+Status s = DPMSGetVersion(display, &major_version, &minor_version);
+return Scm_Values2(Scm_MakeInteger(major_version),
+                   Scm_MakeInteger(minor_version));")
+
+
+;Bool DPMSCapable(display)
+
+;Status DPMSSetTimeouts(display, standby, suspend, off)
+
+
+(define-cproc dpms-get-timeouts (display::<Display*>)
+  "CARD16 standby, suspend, off;
+Bool s =  DPMSGetTimeouts(display, &standby, &suspend, &off);
+return Scm_Values3(Scm_MakeInteger(standby),
+                   Scm_MakeInteger(suspend),
+ Scm_MakeInteger(off));")
+
+;Status DPMSEnable(display)
+;Status DPMSDisable(display)
+
+
+
+;Status DPMSForceLevel(display, level)
+
+(define-cproc dpms-info (display::<Display*>)
+  "CARD16 power_level;
+BOOL state;
+Status s = DPMSInfo(display, &power_level, &state);
+return Scm_Values2(Scm_MakeInteger(power_level),
+                   Scm_MakeInteger(state));")
+
