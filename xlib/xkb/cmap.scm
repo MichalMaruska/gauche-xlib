@@ -37,32 +37,39 @@
 
 
 (define (type-names->types desc type-names)
-  (map (cute find-type-by-name desc <>) type-names))
+  (map
+      (lambda (type-name)
+	(receive (type index)
+	    (find-type-by-name desc type-name)
+	  ;; (cons type index)
+	  type))
+    type-names))
+
 
 ;;; make the KEYCODE have types types-list
-(define (xkb-set-key-types desc keycode types-list . rest)
+;; resizes all the maps.
+(define (xkb-set-key-types desc keycode type-names . rest)
   (let-optionals* rest
       ((commit? #f))
-    (if (> (length types-list) max-num-groups)
-        (error "types assiciated with a keycode can be 4 at max"))
+    (if (> (length type-names) max-num-groups)
+        (error "types associated with a keycode can be 4 at max"))
     ;; find the types  string->
     (let* ((real-types
-            (map
-                (lambda (type-name)
-                  (receive (type index)
-                      (find-type-by-name desc type-name)
-                    (cons type index)))
-              types-list))
+            (map (lambda (type-name)
+		   (receive (type index)
+		       (find-type-by-name desc type-name)
+		     (cons type index)))
+              type-names))
            ;;
-           (width
+           (max-width
             (fold
              (lambda (type-pair width)
                (max width (ref (car type-pair) 'num-levels))) ; isn't it a rectangle?
              0
-             real-types
-             ))
-           (total-size (* (length real-types) width)))
+             real-types))
+           (total-size (* (length real-types) max-width)))
       ;; allocate
+      (logformat "xkb-set-key-types: resizing ~d, from ~d\n" keycode total-size)
       (xkb-resize-keysyms desc keycode total-size)
       (xkb-resize-key-actions desc keycode total-size)
       ;; set
@@ -70,44 +77,55 @@
       ;; commit
       (if commit?
           (xkb-change-keycode desc keycode))
-      width)))
+      max-width)))
 
 
 
 ;; types is a list of real <xkb-type> objects
-;; use: (types (type-names->types desc type-names))
-(define (check-types-vs-matrix types keysyms-matrix)
-  (cond
-   ((not (= (length keysyms-matrix)
-            (length types)))
-    (error "mismatch between the number of types provided, and lists of keysyms."))
-   ;; now, check that every type has the right number of
-   ((not (every (lambda (keysyms type)
-                  (= (length keysyms)
-                     (slot-ref type 'num-levels)))
+;; matrix is a list-of-lists.
+(define (check-types-vs-matrix types keysyms-matrix . rest)
+  (let-optionals* rest
+      ((dpy #f))
+    (cond
+     ((not (= (length keysyms-matrix)
+	      (length types)))
+      (error "mismatch between the number of types provided, and lists of keysyms."))
+     ;; now, check that every type has the right number of
+     ((not (every (lambda (keysyms type)
+		    (logformat "type ~a has ~d levels\n"
+		      (if dpy
+			  (x-atom-name dpy (slot-ref type 'name))
+			(slot-ref type 'name))
+		      (slot-ref type 'num-levels))
+
+		    (= (length keysyms)
+		       (slot-ref type 'num-levels)))
              keysyms-matrix
-           types))
-    (error "the matrix has different rows than the types have (shift) levels."))
-   (else
-    #t)))
+	     types))
+      (error "the matrix has different rows than the types have (shift) levels."))
+     (else
+      #t))))
 
 
 
 
-
+;; change the xkb config for keycode:
+;;  TYPE-NAMES must be existing types
+;; - set the types
+;; - fill the table with keysyms.
 (define (define-keycode-keysyms desc keycode type-names keysyms-matrix modifier)
+  (logformat "define-keycode-keysyms: ~d: ~a\n" keycode type-names)
   (let ((types (type-names->types desc type-names))
         (cmap (ref desc 'map)))
 
-    (check-types-vs-matrix types keysyms-matrix)
-
+    (check-types-vs-matrix types keysyms-matrix (ref desc 'dpy))
     ;; mmc: why not the types?
     (let1 width (xkb-set-key-types desc keycode type-names)
       ;(logformat "width: ~d\n" width)
-      ;;
+
+      ;; now the keysyms
       (fold
        (lambda (type keysyms offset)
-         ;; put ...
          (for-numbers* i 0 (- (length keysyms) 1) ;shoule be eqv? levels of type
            (xkb-client-map-set-keysym!
             cmap (+ offset i)
@@ -119,6 +137,7 @@
        keysyms-matrix)
       ;;
       (xkb-modmap-set! desc keycode modifier)
+      ;; commit:
       (xkb-change-keycode desc keycode))))
 
 ;; `inverse' to `define-keycode-keysyms'
@@ -133,7 +152,7 @@
                             (x-atom-name (ref desc 'dpy) (ref t 'name)))
                        types))
          (width (ref node 'width))
-         
+
          (keysym-matrix
           (reverse
            (third
@@ -157,7 +176,7 @@
     (values type-names keysym-matrix (xkb-modmap desc keycode)))) ;modmap? xkb-modmap
 
 
-;; xkb key type 
+;; xkb key type
 ;; return (values type index)
 (define (find-type-by-name desc name)
   (let* ((dpy (ref desc 'dpy))
@@ -166,12 +185,15 @@
          (found #f)
          (index #f))
     ;; fixme: throw it!
+    ;; (catch
     (map-numbers 0 num-types
       (lambda (i)
         (let ((type (xkb-client-map->type client-map i)))
           (when (string=? name (x-atom->name dpy (slot-ref type 'name)))
             (set! found type)
             (set! index i)))))
+    (if (not found)
+	(error "type not found"))
     (values found index)))
 
 ;;; fancy
@@ -190,7 +212,7 @@
          i
          (x-atom->name dpy
                        (slot-ref type 'name))
-         (type->levels type dpy))))))
+         (type->levels type desc))))))
 
 
 ;; Get the type name  of keycode/group pair.

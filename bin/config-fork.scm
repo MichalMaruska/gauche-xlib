@@ -1,9 +1,11 @@
 #! /usr/bin/gosh
 
 ;;; Aim:
-;;     define "forks": tell the "fork" plugin what keycodes to produce when a key forks (is pressed too much).
-;;     formally:  define a mapping F from keys to keycodes; possibly enlarge the domain of keycodes by 
-;;     defining for the new keycode the associated keysyms.
+;;     define "forks": tell the "fork" plugin what keycodes to produce when a key forks
+;;    (is pressed too much).
+
+;; Formally: define a mapping F from keys to keycodes; possibly enlarge the domain of
+;; keycodes by defining for the new keycode the associated keysyms.
 
 ;; How is the (mapping) F constructed?  There are some contraints, but let's see the base:
 
@@ -307,6 +309,8 @@
 
 
 (xkb-set-controls dpy XkbPerKeyRepeatMask desc)
+
+(xkb-update-map dpy desc)
 (x-flush dpy)
 (x-close-display dpy)
 (sys-exit 0)

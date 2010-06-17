@@ -84,7 +84,8 @@
 ;;; desc
 (define (xkb-get-desc dpy)
   ;; xkb-get-keyboard <--- that was a bad idea
-  (let1 desc (xkb-get-desc* dpy XkbAllMapComponentsMask  XkbUseCoreKbd) ;XkbAllComponentsMask
+  (let1 desc (xkb-get-desc* dpy XkbAllMapComponentsMask XkbUseCoreKbd)
+    ;;XkbAllComponentsMask
     (xkb-get-names desc XkbAllNamesMask)
     ;(xkb-get-geometry desc)
     desc))                                  ;XkbModifierMapMask (logior

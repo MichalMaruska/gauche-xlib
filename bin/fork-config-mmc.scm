@@ -10,25 +10,29 @@
 	)
     (logformat "device ~d\n" device)
     (let1 fork (fork-connect #f #t device)
-      (logformat "~d\n" device)
-      (xfork:debug (ref fork 'dpy) device #t)
+      (xfork:debug (ref fork 'dpy)
+		   (ref fork 'device) #t)
+
       ;;(logformat "forking _reverse_ physical meta (~a) to escape(s)\n" physical-meta-keys)
-;;; Make a new Escape. This will be switched w/ the meta. fixme: why not reuse escape??
+      ;; Make a new Escape. This will be switched w/ the meta. 
+      ;; fixme: why not reuse escape?? ... because having 2 hw keys on the same keyboard combined to 1
+      ;; keycode is wrong!
       (for-each-reverse (fork:physical-meta-keys fork)
 	(lambda (meta-keycode)
 	  (fork-push-to fork meta-keycode
 			'("ONE_LEVEL")
 			'(("Escape"))
 			0
-			())))
+			'((no-action)))))
 
-;;;
+      ;; we hope 128 is the hyper modifier!
       (logformat-color 'green "forking to hyper\n")
       (fork-keys-to fork (list "l" "f")
 		    '("ONE_LEVEL")
 		    '(("Hyper_L"))
 		    128
 		    '(((set-mod 1 128 128 0 0))))
+
 
       (logformat-color 'green  "forking to <SHIFT>\n")
       (fork-keys-to fork (list "space" "v" 47)
@@ -73,7 +77,6 @@
 
       ;; 
       ;; (fork-to! (ref fork 'dpy) 58 49)
-
       (fork-commit fork)
 
       (sys-exit 0)
