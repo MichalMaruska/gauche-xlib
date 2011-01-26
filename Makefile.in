@@ -1,11 +1,7 @@
 CC = @CC@
 
-#X_LIB_DIR = -L/usr/X11R6/lib/
-#X_HEADER_DIR = -I /usr/X11R6/include/
-
-X_LIB_DIR = -L /opt/xorg/lib/
-X_HEADER_DIR = -I /opt/xorg/include/
-
+X_LDFLAGS := $(shell pkg-config --libs x11 xi xkbfile)
+X_CFLAGS := $(shell pkg-config  --cflags x11 xi xkbfile)
 
 # These may be overridden by make invocators
 DESTDIR  = 
@@ -13,9 +9,9 @@ OPTFLAGS = @OPTFLAGS@
 
 
 # These are set by configure
-CFLAGS = @CFLAGS@ $(OPTFLAGS) $(X_HEADER_DIR)
+CFLAGS = @CFLAGS@ $(OPTFLAGS) $(X_CFLAGS) -fPIC
 LDFLAGS = @LDFLAGS@
-X_LIBS= -lX11 -lfork -lxkbfile -lXi
+X_LIBS= -lfork
 # -lXtst
 # mmc: fixme!
 LIBS = @LIBS@ $(X_LIBS)
@@ -47,7 +43,7 @@ GENSTUB = mmc/mmgenstub
 all : $(TARGET)
 
 xlib.so : $(OBJS)
-	$(CC) $(X_LIB_DIR) $(LDFLAGS) xlib.so $(OBJS) $(LIBS)
+	$(CC) $(X_LDFLAGS) $(LDFLAGS) xlib.so $(OBJS) $(LIBS)
 
 xlib.c : xlib.stub xlib-lib.h
 	$(GOSH) $(GENSTUB) xlib.stub || (rm $@ ; false)
