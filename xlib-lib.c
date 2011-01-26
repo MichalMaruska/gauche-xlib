@@ -63,7 +63,7 @@ print_error (Display *dpy,XErrorEvent *ev)
         (ev->request_code < (sizeof(request_names)/sizeof(request_names[0]))))
        fprintf(stderr, "The request was: %s\n", request_names[ev->request_code -1]);
     else
-       fprintf(stderr, "The request was  out-of-range: %d %d!\n",
+       fprintf(stderr, "The request was  out-of-range: %d %lu!\n",
                0, (sizeof(request_names)/sizeof(request_names[0])));
     
     fprintf(stderr, "  Request Major code: %d\n", ev->request_code);

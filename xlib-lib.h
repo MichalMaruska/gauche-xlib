@@ -22,10 +22,9 @@
 #include <X11/extensions/XInput.h>
 
 #include  <X11/XKBlib.h>
-#include  <X11/extensions/dpms.h>
+// #include  <X11/extensions/dpms.h>
 
-#include  <xorg/fork.h>
-#include  <xorg/fork_requests.h>
+#include  <X11/extensions/fork.h>
 
 
 #define CHECK_KEYCODE_IN(desc,keycode) \
