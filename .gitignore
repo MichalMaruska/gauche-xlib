@@ -1,2 +1,4 @@
 configure
 xlib.c
+debian/files
+Makefile

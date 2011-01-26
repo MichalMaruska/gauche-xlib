@@ -33,7 +33,6 @@
 		    128
 		    '(((set-mod 1 128 128 0 0))))
 
-
       (logformat-color 'green  "forking to <SHIFT>\n")
       (fork-keys-to fork (list "space" "v" 47)
 		    '("ONE_LEVEL")
@@ -71,14 +70,14 @@
 		    ;; fixme: this is about group 4
 		    '(((set-group 0 3))))
 
-					;(or (xkb-set-explicit! desc keycode XkbAllExplicitMask) ;XkbExplicitInterpretMask
+					;(or (xkb-set-explicit! desc keycode XkbAllExplicitMask)
+					;XkbExplicitInterpretMask
 					;    (error "set-explicit failed"))
 
 
       ;; 
       ;; (fork-to! (ref fork 'dpy) 58 49)
       (fork-commit fork)
-
       (sys-exit 0)
       )))
 
