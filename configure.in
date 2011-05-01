@@ -1,8 +1,5 @@
 dnl
-dnl Configure pg extension
-dnl  process this file with "autoconf -l ../.." to generate 'configure'.
-dnl $Id: configure.in,v 1.1 2004/03/13 17:34:57 mmc Exp $
-AC_INIT()
+AC_INIT(Gauche-xlib, 2.2, mmaruska@gmail.com)
 AC_CANONICAL_SYSTEM
 AC_GAUCHE_INIT_EXT
 
@@ -23,4 +20,5 @@ AC_GAUCHE_FIX_LIBS
 
 # Output
 AC_GAUCHE_EXT_FIXUP(xlib)
+AM_INIT_AUTOMAKE
 AC_OUTPUT(Makefile)

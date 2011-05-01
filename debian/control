@@ -2,7 +2,7 @@ Source: gauche-xlib
 Section: interpreters
 Priority: extra
 Maintainer: Michal Maruska <mmaruska@gmail.com>
-Build-Depends: debhelper (>= 5), autotools-dev, gauche-dev, gauche-mmc, libx11-dev, libfork, libxi-dev, libxkbfile-dev, pkg-config
+Build-Depends: cdbs, debhelper (>= 5), autotools-dev, gauche-dev, gauche-mmc, libx11-dev, libfork, libxi-dev, libxkbfile-dev, pkg-config
 Standards-Version: 3.7.2
 
 Package: gauche-xlib

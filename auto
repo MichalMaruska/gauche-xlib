@@ -1,6 +1,14 @@
+#! /bin/sh
+
+# provide the   Automake related files ... install-sh
+
+# sort of run Automake(1)
+touch Makefile.am
+mv -v Makefile.in Makefile.in.real
+autoreconf --install
+
+
 export WANT_AUTOCONF_2_5=1
-autoconf  --include `gauche-config --ac` configure.in> configure  
-
-./configure
-
-make
+autoconf  --include `gauche-config --ac` configure.in> configure
+mv -v Makefile.in.real Makefile.in
+chmod +x  ./configure
