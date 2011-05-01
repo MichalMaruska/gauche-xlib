@@ -1,3 +1,9 @@
+gauche-xlib (1.8.1) maverick; urgency=low
+
+  * for Maverick
+
+ -- Michal Maruska <mmaruska@gmail.com>  Tue, 08 Feb 2011 11:02:17 +0100
+
 gauche-xlib (1.8) lucid; urgency=low
 
   * fix for amd64
