@@ -11,7 +11,7 @@
     (logformat "device ~d\n" device)
     (let1 fork (fork-connect #f #t device)
       (xfork:debug (ref fork 'dpy)
-		   (ref fork 'device) #t)
+		   (ref fork 'device) #f)
 
       ;;(logformat "forking _reverse_ physical meta (~a) to escape(s)\n" physical-meta-keys)
       ;; Make a new Escape. This will be switched w/ the meta. 
