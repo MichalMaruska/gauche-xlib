@@ -9,7 +9,7 @@
   (let ((device (string->number (cadr args)))
 	)
     (logformat "device ~d\n" device)
-    (let1 fork (fork-connect #f #t device)
+    (let1 fork (fork-connect #f #f device) ; display debug 
       (xfork:debug (ref fork 'dpy)
 		   (ref fork 'device) #f)
 

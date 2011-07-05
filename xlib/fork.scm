@@ -61,7 +61,7 @@
 
 ;;; Prepare to monitor & update forking stuff in the X server.
 ;;;
-(define (fork-connect . rest)	;todo! let-optionals
+(define (fork-connect . rest)	;todo! let-keywords
   (let-optionals* rest
       ((display #f)
        (debug #f)
