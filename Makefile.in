@@ -11,7 +11,7 @@ OPTFLAGS = @OPTFLAGS@
 # These are set by configure
 CFLAGS = @CFLAGS@ $(OPTFLAGS) $(X_CFLAGS) -fPIC
 LDFLAGS = @LDFLAGS@
-X_LIBS= -lfork
+X_LIBS= -lfork -lX11
 # -lXtst
 # mmc: fixme!
 LIBS = @LIBS@ $(X_LIBS)
