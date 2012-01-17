@@ -94,12 +94,14 @@ if (ev->present)
 else
    return Scm_Values2(SCM_FALSE, SCM_FALSE);")
 
-(define-cproc x-list-input-devices (dpy::<Display*>)
-  "
-int ndevices;
-XDeviceInfo* di = XListInputDevices(dpy, &ndevices);
-XFreeDeviceList(di);
-return Scm_MakeInteger(ndevices);")
+
+;; mmc fixme!
+;;(define-cproc x-list-input-devices (dpy::<Display*>)
+;;   "
+;; int ndevices;
+;; XDeviceInfo* di = XListInputDevices(dpy, &ndevices);
+;; XFreeDeviceList(di);
+;; return Scm_MakeInteger(ndevices);")
 
 
 ;; fixme:  flush !!
