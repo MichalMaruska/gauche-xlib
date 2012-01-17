@@ -787,40 +787,41 @@ else
 
 
 
-(define-cproc x-keysym-name (sym::<uint>)
-  "
-char* name = XkbKeysymText(sym,XkbCFile);
-if (strncmp(name,\"XK_\", 3) == 0) {
-   name += 3;
+;; fixme!
+;; (define-cproc x-keysym-name (sym::<uint>)
+;;   "
+;; char* name = XkbKeysymText(sym,XkbCFile);
+;; if (strncmp(name,\"XK_\", 3) == 0) {
+;;    name += 3;
 
-   if (strcmp(name,\"Return\") == 0){
-      name=\"<cr>\";
-   } else if (strncmp(name,\"Meta_\",5) == 0){
-      name=\"^M\";
-   } else if (strncmp(name,\"Control_\",8) == 0){
-      name=\"^C\";
-   } else if (strncmp(name,\"Hyper_L\",6) == 0){
-      name=\"^H\";
-   } else if (strncmp(name,\"Mode_switch\",11) == 0){
-      name=\"MS\";
-   } else if (strncmp(name,\"comma\",5) == 0){
-      name=\",\";
-   } else if (strncmp(name,\"Shift_L\",7) == 0){
-      name=\"ShL\";
-   } else if (strncmp(name,\"Shift_R\",7) == 0){
-      name=\"ShR\";
-   } else if (strncmp(name,\"ISO_Group_Latch\",15) == 0){
-      name=\"Gr\";
-   };
-} else if (strcmp(name,\"NoSymbol\") == 0){
-   name=\"??\";
-};
+;;    if (strcmp(name,\"Return\") == 0){
+;;       name=\"<cr>\";
+;;    } else if (strncmp(name,\"Meta_\",5) == 0){
+;;       name=\"^M\";
+;;    } else if (strncmp(name,\"Control_\",8) == 0){
+;;       name=\"^C\";
+;;    } else if (strncmp(name,\"Hyper_L\",6) == 0){
+;;       name=\"^H\";
+;;    } else if (strncmp(name,\"Mode_switch\",11) == 0){
+;;       name=\"MS\";
+;;    } else if (strncmp(name,\"comma\",5) == 0){
+;;       name=\",\";
+;;    } else if (strncmp(name,\"Shift_L\",7) == 0){
+;;       name=\"ShL\";
+;;    } else if (strncmp(name,\"Shift_R\",7) == 0){
+;;       name=\"ShR\";
+;;    } else if (strncmp(name,\"ISO_Group_Latch\",15) == 0){
+;;       name=\"Gr\";
+;;    };
+;; } else if (strcmp(name,\"NoSymbol\") == 0){
+;;    name=\"??\";
+;; };
 
-ScmObj result;
-/* SCM_MAKE_STR_IMMUTABLE  ...wrong*/
-result = SCM_MAKE_STR_COPYING(name);
-/* free (name); */
-return result;")
+;; ScmObj result;
+;; /* SCM_MAKE_STR_IMMUTABLE  ...wrong*/
+;; result = SCM_MAKE_STR_COPYING(name);
+;; /* free (name); */
+;; return result;")
 
 ;;; XKB Controls:
 
