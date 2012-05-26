@@ -5,14 +5,14 @@
    xkb-find-key-by-keysyms   xkb-find-key-by-keysyms-or-create
    xkb-find-key-by-action    xkb-find-key-by-action-or-create
 
-   ;; partial 
+   ;; partial
    keysym+group+level->keycode
    keysym->keycode
 
    keysym->modifier
 
    filter-keycodes  map-keycodes
-   
+
    ;;
    xkb-move-keysyms
    xkb-copy-keysyms
@@ -24,6 +24,8 @@
    old-virtual->real
    vmodifier->real
    )
+
+
   (use srfi-1)
   (use srfi-13)
 
@@ -34,11 +36,10 @@
   (use adt.bits)
   (use xlib)
   (use xlib.xkb)
-  ;(use xlib.xkb)
   ;(use xlib.xkb.geometry)
   (use xlib.xkb.cmap)
   (use xlib.xkb.server)
-  (use xlib.xkb.fork)                   ;
+  (use xlib.xkb.fork)
 
   (use adt.alist)
   (use adt.list)                        ;?? list-constant?
@@ -66,30 +67,33 @@
         (client-map (ref desc 'map)))
     ;; fixme: i should check that keysyms is
     (check-types-vs-matrix types keysyms-matrix)
-      
+
     (xkb-filter-keycode
      desc
      (lambda (keycode desc)
        (let1 ngroups (ref (xkb-keycode->node desc keycode) 'groups)
          (cond
           ((not (= group-count ngroups))
-                                        ;(logformat "~d has a different number of groups: ~d\n" keycode ngroups)
+	   ;;(logformat "~d has a different number of groups: ~d\n" keycode ngroups)
            #f)
           ((not (every xkb-types=?
                     types
                   (map-numbers* i 0 ngroups
-                    (xkb-client-map->type client-map (xkb-key-type desc keycode i)))))
-           
+                    (xkb-client-map->type client-map
+					  (xkb-key-type desc keycode i)))))
+
            '(logformat "~d has ~d group, but a different types\n" keycode
                        ngroups)
-                                        ;(ref (xkb-client-map->type client-map (xkb-key-type desc keycode 0)) 'name)
+	   ;;(ref (xkb-client-map->type client-map (xkb-key-type desc keycode 0))
+	   ;; 'name)
            #f)
           ;; check the keysyms:
           ((catch 'found
              (for-numbers* group 0 (- ngroups 1)
                ;; group -> type
-               (let1 type (xkb-client-map->type client-map (xkb-key-type desc keycode group))
-                 (unless 
+               (let1 type (xkb-client-map->type client-map
+						(xkb-key-type desc keycode group))
+                 (unless
                      (list=
                       equal? ;; fixme: either #f or a string! string=?
                       (map-numbers* level 0 (slot-ref type 'num-levels)
@@ -103,13 +107,15 @@
           (else #t)))))))
 
 
-;; fixme: the modifier is not used for searching. we don't either use the actions, so
-;; Finds the minimum keycode!
-;; OVERWRITE ... the modifier is forced. This should be removed?
-(define (xkb-find-key-by-keysyms-or-create desc type-names keysyms-matrix modifier . rest)
+;; fixme: the modifier is not used for searching. we don't either use the actions,
+;; so Finds the minimum keycode!  OVERWRITE ... the modifier is forced. This should
+;; be removed?
+(define (xkb-find-key-by-keysyms-or-create desc type-names keysyms-matrix
+					   modifier . rest)
   (let-optionals* rest
       ((overwrite #t))
-    (let1 existing (xkb-find-key-by-keysyms desc type-names keysyms-matrix) ;fixme: modifier not considered!
+    (let1 existing (xkb-find-key-by-keysyms desc type-names keysyms-matrix)
+      ;;fixme: modifier not considered!
       (if (null? existing)
           (let1 new-keycode (xkb-allocate-keycode desc)
             (logformat "xkb-find-key-by-keysyms: we have to CREATE a new keycode: ~d\n" new-keycode)
@@ -147,7 +153,8 @@
      (lambda (keycode desc)
        (and (= 1 (ref (xkb-keycode->node desc keycode) 'groups))
             (xkb-types=? type
-                         (xkb-client-map->type client-map (xkb-key-type desc keycode 0)))
+                         (xkb-client-map->type client-map
+					       (xkb-key-type desc keycode 0)))
 
             (xkb-key-has-actions desc keycode)
             ;; is this useless: ?
@@ -181,7 +188,7 @@
 
 
 
-;; 
+;;
 (define (xkb-move-keysyms desc from-keycode to-keycode)
   (let1 dpy (ref desc 'dpy)
     (unless (null? (forks-to to-keycode))
@@ -192,7 +199,7 @@
       (xkb-copy-keysyms desc from-keycode to-keycode)
       ;; fixme: move the actions!!!
       ;; re-fork
-      (for-each 
+      (for-each
           (lambda (keycode)
             (fork-to! dpy keycode to-keycode))
         forked-from)
@@ -243,7 +250,7 @@
     ;; filter
       (lambda (keycode)
         (let1 node (xkb-keycode->node desc keycode)
-                
+
           '(logformat "trying ~d: ~d ~d\t" i
                       (slot-ref (xkb-client-map->node client-map keycode) 'offset)
                       (xkb-index->keysym
@@ -251,7 +258,7 @@
                        (slot-ref (xkb-client-map->node xkb-map keycode) 'offset)))
           ;; "space"
           (and
-           ;; fixme: this is wrong: 
+           ;; fixme: this is wrong:
            (> (ref node 'groups) group) ;i use group 0!
            ;;fixme:  the type of the group has the level
            (xkb-keysym-of desc keycode group level)
@@ -288,8 +295,10 @@
   (let* ((keycodes (keysym+group+level->keycode desc keysym 0 0))
          (modifiers (map (cut xkb-modmap desc <>) keycodes)))
     (unless (list-constant? modifiers)
-      ;; (logformat "keysym ~s is associated with different modifiers: ~s.  Aborting\n" keysym modifiers)
-      (errorf "keysym ~s is associated with different modifiers: ~s.  Aborting\n" keysym modifiers))
+      ;; (logformat "keysym ~s is associated with different modifiers: ~s.
+      ;;   Aborting\n" keysym modifiers)
+      (errorf "keysym ~s is associated with different modifiers: ~s.  Aborting\n"
+	      keysym modifiers))
     (car modifiers)))
 
 
@@ -307,8 +316,7 @@
       #f)))
 
 (define virtual->keysym-table
-  '(
-    ("shift" "Shift_R" "Shift_L")
+  '(("shift" "Shift_R" "Shift_L")
     ("meta" "Meta_L" "Meta_R")
     ("alt" "Alt_L" "Alt_R")
     ("hyper" "Hyper_L" "Hyper_R")
@@ -346,5 +354,3 @@
 
 
 (provide "xlib/xkb/find")
-
-
