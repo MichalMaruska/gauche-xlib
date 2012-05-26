@@ -20,6 +20,7 @@ GAUCHE_CONFIG = @GAUCHE_CONFIG@
 GAUCHE_TOP = @GAUCHE_TOP@
 INSTALL = @INSTALL@
 
+MODULE   = xlib
 ARCHFILES = xlib.so
 
 SCMFILES = xlib.scm  $(wildcard xlib/*scm xlib/xkb/*scm)
@@ -27,8 +28,9 @@ BINFILES = $(wildcard bin/*.scm)
 
 HEADERS =
 
-TARGET = xlib.so
-OBJS = xlib_head.o xlib.o xlib_tail.o  xlib-lib.o
+TARGET = $(MODULE).so
+OBJS = $(MODULE)_head.o $(MODULE)_tail.o xlib.o xlib-lib.o
+GENERATED = xlib.c $(MODULE)_head.c $(MODULE)_tail.c
 CONFIG_GENERATED = Makefile config.cache config.log config.status\
 		   autom4te*.cache xlib_head.c xlib_tail.c
 
@@ -78,7 +80,7 @@ install : all
 	done
 
 clean :
-	rm -rf core $(TARGET) $(OBJS) *~ test.log so_locations xlib.c
+	rm -rf core $(TARGET) $(OBJS) *~ test.log so_locations xlib.c $(GENERATED)
 
 distclean : clean
 	rm -rf $(CONFIG_GENERATED)
