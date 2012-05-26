@@ -7,17 +7,9 @@ clean::
 	-$(MAKE) clean
 
 
-configure/gauche-xlib::
-	./configure --prefix=/usr
-
 # between-configure-and-build:
 #	-$(MAKE) stubs
 # 	autoreconf --install
 # 	autoconf --include `gauche-config --ac` configure.in > configure \
 #         	&& chmod +x configure || die "autoconf failed!"
 # 	cp -fv Makefile.in.real Makefile.in
-
-
-install/gauche-xlib::
-	$(MAKE) install DESTDIR=$(DEB_DESTDIR)
-
