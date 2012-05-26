@@ -4,8 +4,7 @@
 (define-module xlib.xkb.cmap
   (export
    find-type-by-name
-   ;;find-new-keycode
-   ;; xkb-allocate-keycode   ... what is this? ... fork
+   xkb-allocate-keycode   ;;... what is this? ... fork
    xkb-set-key-types
    type-names->types
 
@@ -262,6 +261,29 @@
   (for-numbers* keycode (ref desc 'min-key-code)
                 (ref desc 'max-key-code)
     (function keycode)))
+
+
+
+;; Find first keycode, which
+;; 1/ is not on the keyboard geometry,
+;; 2/ has no groups/types/ i.e. keysyms associated!
+;; 3/ todo: non forked-to (i.e. fork destination).
+(define (xkb-allocate-keycode desc device)
+  (let1 busy (xkb-unallocated-keycodes desc)
+    (let1 new
+	;; find between the range:
+	(find-in-numbers 1 245
+	  (lambda (i)
+	    (or (vector-ref busy i)
+		(let1 node (xkb-keycode->node desc i)
+
+		  (not (zero? (ref node 'groups))))
+		(not (null? (forks-to (ref desc 'dpy) i)))
+		;;(not (zero? (ref (xkb-keycode->node desc i) 'groups)))
+		)))
+      (logformat "xkb-allocate-keycode: ~d\n" new)
+    new)))
+
 
 
 
