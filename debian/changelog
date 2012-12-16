@@ -1,3 +1,9 @@
+gauche-xlib (1.8.4) precise; urgency=low
+
+  * for new 0.9.4 (pre2)
+
+ -- Michal Maruska <mmaruska@gmail.com>  Sun, 16 Dec 2012 21:16:33 +0100
+
 gauche-xlib (1.8.3) precise; urgency=low
 
   * update fix-verbose to accept the device param
