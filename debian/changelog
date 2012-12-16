@@ -1,3 +1,22 @@
+gauche-xlib (1.8.5) precise; urgency=low
+
+  * update fix-verbose to accept the device param
+  * start Fork-configuration by being NOT in debug mode
+  * the original config-fork
+  * and drop it again
+  * drop "make stubs"
+  * drop x-list-input-devices stub
+  * drop XkbKeysymText. why?
+  * libfork does not depend on libX11. So we have to request it???
+  * reformatting
+  * reintroduce (lost) xkb-allocate-keycode
+  * clean the debian/rules  (also "clean")
+  * improve Makefile.in
+  * drop configure & install definitions. Don't duplicate the effort!
+  * drop useless module dependency
+
+ -- Michal Maruska <mmaruska@gmail.com>  Sun, 16 Dec 2012 23:58:28 +0100
+
 gauche-xlib (1.8.2) maverick; urgency=low
 
   * update debianization. + verbosity off
