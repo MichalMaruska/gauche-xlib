@@ -36,7 +36,6 @@
   (use adt.bits)
   (use xlib)
   (use xlib.xkb)
-  ;(use xlib.xkb.geometry)
   (use xlib.xkb.cmap)
   (use xlib.xkb.server)
   (use xlib.xkb.fork)
