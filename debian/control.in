@@ -2,12 +2,12 @@ Source: gauche-xlib
 Section: interpreters
 Priority: extra
 Maintainer: Michal Maruska <mmaruska@gmail.com>
-Build-Depends: cdbs, debhelper (>= 5), autotools-dev, gauche-dev, gauche-mmc, libx11-dev, libfork, libxi-dev, libxkbfile-dev, pkg-config
+Build-Depends: debhelper (>= 7), autotools-dev, gauche-dev, libx11-dev, libfork, libxi-dev, libxkbfile-dev, pkg-config
 Standards-Version: 3.7.2
 
-Package: gauche-xlib
+Package: gauche-@GAUCHE_VERSION@-xlib
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, gauche (=0.9.4~pre3maruska1), libx11-6, gauche-mmc, libfork, libxi6, libxkbfile1
+Depends: ${shlibs:Depends}, ${misc:Depends}, gauche-@GAUCHE_VERSION@, libx11-6, gauche-mmc, libfork, libxi6, libxkbfile1
 Description: gauche binding to libX11
  This binding to libX11 is intented to monitor & configure input devices.
  A few Window requests are available.

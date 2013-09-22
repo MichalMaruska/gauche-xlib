@@ -1,5 +1,6 @@
 #! /bin/sh
 
+make -f debian/rules  debian/control
 # provide the   Automake related files ... install-sh
 
 # sort of run Automake(1)
@@ -12,3 +13,12 @@ export WANT_AUTOCONF_2_5=1
 autoconf  --include `gauche-config --ac` configure.in> configure
 mv -v Makefile.in.real Makefile.in
 chmod +x  ./configure
+
+
+
+# between-configure-and-build:
+#	-$(MAKE) stubs
+# 	autoreconf --install
+# 	autoconf --include `gauche-config --ac` configure.in > configure \
+#         	&& chmod +x configure || die "autoconf failed!"
+# 	cp -fv Makefile.in.real Makefile.in

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+GAUCHE_VERSION=$(gauche-config -V|sed -e 's/_/-/');
+
+cat $@ | sed -e "s/@GAUCHE_VERSION@/${GAUCHE_VERSION}/g"
+

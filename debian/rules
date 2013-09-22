@@ -1,15 +1,9 @@
 #!/usr/bin/make -f
 
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/autotools.mk
 
-clean::
-	-$(MAKE) clean
+debian/control:
+	# fix the Package name
+	./replace-gauche-string  debian/control.in > $@
 
-
-# between-configure-and-build:
-#	-$(MAKE) stubs
-# 	autoreconf --install
-# 	autoconf --include `gauche-config --ac` configure.in > configure \
-#         	&& chmod +x configure || die "autoconf failed!"
-# 	cp -fv Makefile.in.real Makefile.in
+%:
+	dh $@
