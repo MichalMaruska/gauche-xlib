@@ -1,3 +1,11 @@
+gauche-xlib (1.9) release; urgency=low
+
+  * Migrate to dh + gauche-api level
+  * Fix (unit) test
+  * Dependency, from now on, on gauche-mmc-2
+
+ -- Michal Maruska <mmaruska@gmail.com>  Sun, 22 Sep 2013 20:25:42 +0200
+
 gauche-xlib (1.8.6) precise; urgency=low
 
   * for  gauche 0.9.4~pre3maruska1
