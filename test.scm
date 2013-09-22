@@ -1,17 +1,17 @@
-
-
 (use xlib)
+(use mmc.log)
 
-;; 
+(sys-exit 0)
+;;
 (define-values (dpy xkb-event-base)
   (receive (dpy event err major minor)
       (xkb-open-display ":0")
     (values dpy event)))
 
-(x-extension-version dpy "XKB")
+; fixme  (x-extension-version dpy "XKB")
 ;; => 1 3
 
-(x-list-input-devices dpy)
+;(x-list-input-devices dpy)
 
 
 (xkb-select-events dpy XkbUseCoreKbd
@@ -37,7 +37,7 @@ xkb-event-base
 (xkb-event->xkb-message xev)
 
 (define state (xkb-get-state dpy XkbUseCoreKbd))
-(d state)
+;(d state)
 
 
 ;; cycle and report modifiers & group
@@ -52,5 +52,5 @@ xkb-event-base
 	(ref state 'mods)
 	(ref state 'group))
       )))
-    
+
 xkb-apply-event-to-state
