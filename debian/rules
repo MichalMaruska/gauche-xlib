@@ -3,3 +3,6 @@
 
 %:
 	dh $@
+
+override_dh_install:
+	dh_install --sourcedir=debian/tmp/
