@@ -1,8 +1,9 @@
 #! /bin/sh
 
-make -f debian/rules  debian/control
-# provide the   Automake related files ... install-sh
+replace-gauche-string.pl debian/control.in > debian/control
 
+
+# provide the   Automake related files ... install-sh
 # sort of run Automake(1)
 touch Makefile.am
 mv -v Makefile.in Makefile.in.real

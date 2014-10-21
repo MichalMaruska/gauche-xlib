@@ -1,9 +1,5 @@
 #!/usr/bin/make -f
 
 
-debian/control:
-	# fix the Package name
-	./replace-gauche-string  debian/control.in > $@
-
 %:
 	dh $@
