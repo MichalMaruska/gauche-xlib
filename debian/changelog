@@ -1,3 +1,12 @@
+gauche-xlib (2.0) unstable; urgency=medium
+
+  * Provide virtual package to deliver the versioned one.
+  * Use replace-gauche-string.pl
+  * Provide *.install & a trick in rules
+  * don't link to non-directly called libs
+
+ -- Michal Maruska <mmaruska@gmail.com>  Mon, 27 Oct 2014 01:09:05 +0100
+
 gauche-xlib (1.9) release; urgency=low
 
   * Migrate to dh + gauche-api level
