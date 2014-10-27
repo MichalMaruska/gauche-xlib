@@ -1,10 +1,10 @@
 CC = @CC@
 
-X_LDFLAGS := $(shell pkg-config --libs x11 xi xkbfile)
+# X_LDFLAGS := $(shell pkg-config --libs x11 xi xkbfile)
 X_CFLAGS := $(shell pkg-config  --cflags x11 xi xkbfile)
 
 # These may be overridden by make invocators
-DESTDIR  = 
+DESTDIR  =
 OPTFLAGS = @OPTFLAGS@
 
 
@@ -13,8 +13,8 @@ CFLAGS = @CFLAGS@ $(OPTFLAGS) $(X_CFLAGS) -fPIC
 LDFLAGS = @LDFLAGS@
 X_LIBS= -lfork -lX11
 # -lXtst
-# mmc: fixme!
-LIBS = @LIBS@ $(X_LIBS)
+# mmc: fixme! @LIBS@ 
+LIBS = $(X_LIBS)
 GOSH = @GOSH@
 GAUCHE_CONFIG = @GAUCHE_CONFIG@
 GAUCHE_TOP = @GAUCHE_TOP@
@@ -45,7 +45,7 @@ GENSTUB = mmc/mmgenstub
 all : $(TARGET)
 
 xlib.so : $(OBJS)
-	$(CC) $(X_LDFLAGS) $(LDFLAGS) xlib.so $(OBJS) $(LIBS)
+	$(CC) $(LDFLAGS) xlib.so $(OBJS) $(LIBS)
 
 xlib.c : xlib.stub xlib-lib.h
 	$(GOSH) $(GENSTUB) xlib.stub || (rm $@ ; false)
