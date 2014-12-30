@@ -1,3 +1,12 @@
+gauche-xlib (1.10) unstable; urgency=medium
+
+  * Provide virtual package to deliver the versioned one.
+  * Use replace-gauche-string.pl
+  * Provide *.install & a trick in rules
+  * .install files in conflict when only 1 bin package.
+
+ -- Michal Maruska <mmaruska@gmail.com>  Tue, 30 Dec 2014 12:19:25 +0100
+
 gauche-xlib (1.9) release; urgency=low
 
   * Migrate to dh + gauche-api level
