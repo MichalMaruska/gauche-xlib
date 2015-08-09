@@ -1,6 +1,7 @@
 #! /bin/sh
 
-replace-gauche-string.pl debian/control.in > debian/control
+# replace-gauche-string.pl
+cat debian/control.in > debian/control
 
 
 # provide the   Automake related files ... install-sh
