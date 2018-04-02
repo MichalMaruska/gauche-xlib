@@ -1,4 +1,3 @@
-
 (define-module xlib.xkb.find
   (export
    xkb-types=?                          ;an ugly hack
@@ -73,25 +72,25 @@
        (let1 ngroups (ref (xkb-keycode->node desc keycode) 'groups)
          (cond
           ((not (= group-count ngroups))
-	   ;;(logformat "~d has a different number of groups: ~d\n" keycode ngroups)
+           ;;(logformat "~d has a different number of groups: ~d\n" keycode ngroups)
            #f)
           ((not (every xkb-types=?
                     types
                   (map-numbers* i 0 ngroups
                     (xkb-client-map->type client-map
-					  (xkb-key-type desc keycode i)))))
+                                          (xkb-key-type desc keycode i)))))
 
            '(logformat "~d has ~d group, but a different types\n" keycode
                        ngroups)
-	   ;;(ref (xkb-client-map->type client-map (xkb-key-type desc keycode 0))
-	   ;; 'name)
+           ;;(ref (xkb-client-map->type client-map (xkb-key-type desc keycode 0))
+           ;; 'name)
            #f)
           ;; check the keysyms:
           ((catch 'found
              (for-numbers* group 0 (- ngroups 1)
                ;; group -> type
                (let1 type (xkb-client-map->type client-map
-						(xkb-key-type desc keycode group))
+                                                (xkb-key-type desc keycode group))
                  (unless
                      (list=
                       equal? ;; fixme: either #f or a string! string=?
@@ -110,7 +109,7 @@
 ;; so Finds the minimum keycode!  OVERWRITE ... the modifier is forced. This should
 ;; be removed?
 (define (xkb-find-key-by-keysyms-or-create desc type-names keysyms-matrix
-					   modifier . rest)
+                                           modifier . rest)
   (let-optionals* rest
       ((overwrite #t))
     (let1 existing (xkb-find-key-by-keysyms desc type-names keysyms-matrix)
@@ -153,7 +152,7 @@
        (and (= 1 (ref (xkb-keycode->node desc keycode) 'groups))
             (xkb-types=? type
                          (xkb-client-map->type client-map
-					       (xkb-key-type desc keycode 0)))
+                                               (xkb-key-type desc keycode 0)))
 
             (xkb-key-has-actions desc keycode)
             ;; is this useless: ?
@@ -297,7 +296,7 @@
       ;; (logformat "keysym ~s is associated with different modifiers: ~s.
       ;;   Aborting\n" keysym modifiers)
       (errorf "keysym ~s is associated with different modifiers: ~s.  Aborting\n"
-	      keysym modifiers))
+              keysym modifiers))
     (car modifiers)))
 
 

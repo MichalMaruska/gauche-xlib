@@ -35,7 +35,7 @@
   ;; fixme: (let1 geometry-mapping (xkb-create-inverse-mapping desc)
   (filter
       (lambda (keycode)
-	(vector-ref geometry keycode))
+        (vector-ref geometry keycode))
     keycodes))
 
 
@@ -70,56 +70,56 @@
     (unless display
       (set! display (sys-getenv "DISPLAY")))
     (let* ((dpy (x-open
-		 display))
-	   (desc (xkb-get-desc dpy)))
+                 display))
+           (desc (xkb-get-desc dpy)))
       (xkb-get-controls dpy XkbAllControlsMask desc)
       (let* ((controls (xkb-desc->controls desc))
-	     (fork (make <xfork-state>
-		     :dpy dpy
-		     :device device
-		     :desc desc
-		     :controls controls))
-	     (geometry-mapping (xkb-create-inverse-mapping desc)))
-	(vector-set! geometry-mapping 49
-					;(section row column)
-		     '(1 1 1))
-	(slot-set! fork 'geometry-mapping geometry-mapping)
+             (fork (make <xfork-state>
+                     :dpy dpy
+                     :device device
+                     :desc desc
+                     :controls controls))
+             (geometry-mapping (xkb-create-inverse-mapping desc)))
+        (vector-set! geometry-mapping 49
+                                        ;(section row column)
+                     '(1 1 1))
+        (slot-set! fork 'geometry-mapping geometry-mapping)
 
-	;; Find
-	(slot-set! fork 'physical-keys
-	  (filter-keycodes desc
-	    (lambda (keycode)
-	      (vector-ref geometry-mapping keycode))))
-	;; fixme: i'm lazy to touch xkb desc files. Much easier a fix:
-	;; Another one (besides 49)!
-	(push! (ref fork 'physical-keys) 94)
+        ;; Find
+        (slot-set! fork 'physical-keys
+          (filter-keycodes desc
+            (lambda (keycode)
+              (vector-ref geometry-mapping keycode))))
+        ;; fixme: i'm lazy to touch xkb desc files. Much easier a fix:
+        ;; Another one (besides 49)!
+        (push! (ref fork 'physical-keys) 94)
 
-	;;(logformat "setting debug on ~d to ~a\n" device debug)
-	(xfork:debug (ref fork 'dpy) (ref fork 'device) debug)
-	(slot-set! fork 'forked-keys
-	  (apply append
-		 (map			;this  queries the X server. should save on this! todo!
-		     (cute forks-to
-			   (ref fork 'dpy)
-			   (ref fork 'device)
-			  <>)
-		   (slot-ref fork 'physical-keys))))
-	(slot-set! fork 'unused-keycodes
-	  (filter-keycodes desc
-	    (lambda (keycode)
-	      (not (or (member keycode
-			       (slot-ref fork 'forked-keys))
-		       (member keycode
-			       ;; really:
-			       (slot-ref fork 'physical-keys)))))))
-	fork))))
+        ;;(logformat "setting debug on ~d to ~a\n" device debug)
+        (xfork:debug (ref fork 'dpy) (ref fork 'device) debug)
+        (slot-set! fork 'forked-keys
+          (apply append
+                 (map			;this  queries the X server. should save on this! todo!
+                     (cute forks-to
+                           (ref fork 'dpy)
+                           (ref fork 'device)
+                          <>)
+                   (slot-ref fork 'physical-keys))))
+        (slot-set! fork 'unused-keycodes
+          (filter-keycodes desc
+            (lambda (keycode)
+              (not (or (member keycode
+                               (slot-ref fork 'forked-keys))
+                       (member keycode
+                               ;; really:
+                               (slot-ref fork 'physical-keys)))))))
+        fork))))
 
 
 ;;;
 (define (get-new-keycode fork)
   (let1 unused-keycodes (slot-ref fork 'unused-keycodes)
     (if (null? unused-keycodes)
-	(error "keycodes exhausted"))
+        (error "keycodes exhausted"))
     ;; begin0
     (let1 k (car unused-keycodes)
       ;; todo: pop!
@@ -131,22 +131,22 @@
   (let1 meta-modifier 8
     (for-each-reverse keycodes
       (lambda (keycode)
-	(define-keycode-keysyms desc keycode
-	  '("ONE_LEVEL")
-	  '(("Meta_L"))
-	  meta-modifier)
-	(xkb-control-keyrepeats-set! controls keycode #f)
-	;; not repeatable!
-	))))
+        (define-keycode-keysyms desc keycode
+          '("ONE_LEVEL")
+          '(("Meta_L"))
+          meta-modifier)
+        (xkb-control-keyrepeats-set! controls keycode #f)
+        ;; not repeatable!
+        ))))
 
 ;; find all keycodes which are defined as Meta_L. If none is found, we
 ;; suppose my configuration (fixme!) has been applied, and key 64 should be returned
 ;; to be such one.
 (define (fork:physical-meta-keys fork)	; physical  249!
   (let* ((desc (ref fork 'desc))
-	 (possible
-	  (filter-geometry (ref fork 'geometry-mapping)
-			   (keysym+group+level->keycode desc "Meta_L" 0 0))))
+         (possible
+          (filter-geometry (ref fork 'geometry-mapping)
+                           (keysym+group+level->keycode desc "Meta_L" 0 0))))
     ;; (51 61 93 94 116)
     (when (null? possible)
       (logformat "WARNING: couldn't find Meta_L, using 64. And redefining it to proper Meta_L!\n")
@@ -175,13 +175,13 @@
 ;; otherwise, a new keycode is emitted (I.e. the original keycode is redefined)
 (define (fork-push-to fork keycode types keysyms mod actions)
   (let ((desc (ref fork 'desc))
-	(controls (ref fork 'controls)))
+        (controls (ref fork 'controls)))
     (let1 new-keycode (get-new-keycode fork)
       (redefine-keycode desc new-keycode types keysyms mod actions)
 
       (logformat "forking ~d -> ~d\n" new-keycode keycode)
       (push-keycode-to-forked desc (ref fork 'device)
-			      keycode new-keycode)
+                              keycode new-keycode)
       ;; note: we apply the non-AR to the original key
       (xkb-control-keyrepeats-set! controls new-keycode #f))))
 
@@ -190,31 +190,31 @@
 ;; (TYPES KEYSYMS MOD ACTIONS)
 (define (fork-to-new-key fork keycode types keysyms mod actions)
   (let ((desc (ref fork 'desc))
-	(controls (ref fork 'controls)))
+        (controls (ref fork 'controls)))
     (let1 new-keycode (get-new-keycode fork)
       (redefine-keycode desc new-keycode types keysyms mod actions)
         ;; fixme: dont repeat ... this should be `optional'!
       (xkb-control-keyrepeats-set! controls new-keycode #f)
       ;(xkb-set-controls (ref fork 'dpy) XkbRepeatKeysMask desc)
       (fork-to! (ref fork 'dpy)
-		(ref fork 'device)
-		keycode
-		new-keycode))))
+                (ref fork 'device)
+                keycode
+                new-keycode))))
 
 ;; apply fork-to-new-key to all KEYS ;; mmc! hilight
 (define (fork-keys-to fork keys . description)
   (for-each-reverse keys
     (lambda (keysym)
       (apply fork-to-new-key fork
-	     (if (number? keysym)
-		 keysym
-	       (keysym->keycode (ref fork 'desc) keysym))
-	     ;;(keysym->keycode desc keysym)
-	     description))))
+             (if (number? keysym)
+                 keysym
+               (keysym->keycode (ref fork 'desc) keysym))
+             ;;(keysym->keycode desc keysym)
+             description))))
 
 (define (fork-commit fork)
   (let ((dpy (ref fork 'dpy))
-	(desc (ref fork 'desc)))
+        (desc (ref fork 'desc)))
     (xkb-set-controls dpy XkbPerKeyRepeatMask desc)
     (logformat "~d ~d\n" XkbPerKeyRepeatMask (ash 1 30))
     (x-flush dpy)

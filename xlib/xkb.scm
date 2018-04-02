@@ -1,5 +1,3 @@
-
-
 ;;; things about xkb desc which are not a catalogable task.
 
 (define-module xlib.xkb

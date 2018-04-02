@@ -1,4 +1,3 @@
-
 ;; the server map.
 (define-module xlib.xkb.server
   (export
@@ -24,12 +23,12 @@
 ;;; C provides actions as a list of 8 small integers
 ;;; We in scheme handle symbolic lists
 
-;;; 
+;;;
 (define (action-matcher model-action);  type . rest
   (lambda (action)
     (equal? action model-action))); list=
 
-; (cond 
+; (cond
 ;    ((eq? type <xkb-group-action>)
 ;     (let ((flags (car rest))
 ;           (group (cadr rest)))
@@ -46,7 +45,7 @@
 (define
   xkb-action-type->name
   `(;(0  no-action 0)
-   (,XkbSA_SetMods  set-mod 5 ); 
+   (,XkbSA_SetMods  set-mod 5 );
    (,XkbSA_LatchMods  latch-mod 5)
    (,XkbSA_LockMods  lock-mod 5)
    ;;
@@ -66,7 +65,7 @@
 
    ;; XkbSA_SetControls
    (,XkbSA_LockControls lock-controls 5)
-   
+
    (,XkbSA_ActionMessage message 7)   ;16?
    (,XkbSA_RedirectKey redirect 7)
    (,XkbSA_DeviceBtn device 4)
@@ -86,7 +85,7 @@
      (map
          char->integer
        (string->list (third action)))))
-   (else  
+   (else
     (let1 info (find
                 (lambda (info)
                   (eq? (second info) (car action)))
@@ -128,7 +127,7 @@
              ))
            (                          ;(is-a? action <xkb-mod-action>)
             (memv (car action) (list XkbSA_SetMods XkbSA_LatchMods XkbSA_LockMods))
-            (cons                       ;'mod 
+            (cons                       ;'mod
              (aget xkb-action-type->name (first action))
              (take (cdr action) 5)
                                         ;(second action); (ref action 'flags)
@@ -172,7 +171,7 @@
                             (x-atom-name (ref desc 'dpy) (ref t 'name)))
                        types))
          (width (ref node 'width))
-         
+
          (action-matrix
           (reverse
            (third
@@ -207,12 +206,12 @@
       (let1 action-row (list-ref actions group)
         (for-numbers* level 0 (- (length action-row) 1)
           (let1 decoded (decode-action (list-ref action-row level))
-	    (unless (xkb-key-has-actions desc keycode)
-	      (logformat "this is nonsense! ~d\n" keycode))
-	    (logformat "calling xkb-key-set-action: ~d gr:~d lev:~d (~d)\n" keycode group level
-		       (xkb-key-num-actions desc keycode))
+            (unless (xkb-key-has-actions desc keycode)
+              (logformat "this is nonsense! ~d\n" keycode))
+            (logformat "calling xkb-key-set-action: ~d gr:~d lev:~d (~d)\n" keycode group level
+                       (xkb-key-num-actions desc keycode))
             (xkb-key-set-action desc keycode (+ (* group width) level) decoded)
-	    ))))
+            ))))
     (xkb-change-keycode desc keycode)))
 
 (provide "xlib/xkb/server")

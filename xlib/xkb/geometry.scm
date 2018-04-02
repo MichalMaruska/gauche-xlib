@@ -1,4 +1,3 @@
-
 ;;; data-mining the Geometry part of XKB configuration
 
 (define-module xlib.xkb.geometry
@@ -13,7 +12,7 @@
    xkb-iterate-keys
    xkb-name->keycode-hash
    xkb-create-inverse-mapping ;;;  keycode -> position   (section row column)
-   
+
 
    ;; misc
    xkb-unallocated-keycodes
@@ -63,13 +62,13 @@
          key key))))
 
 
-;; call FUNCTION for each section/row/key 
+;; call FUNCTION for each section/row/key
 (define (xkb-iterate-keys geometry function)
-  (for-each 
+  (for-each
       (lambda (section)
-        (for-each 
+        (for-each
             (lambda (row)
-              (for-each 
+              (for-each
                   (lambda (key)
                     (function section row key))
                 (xkb-row->keys row)))
@@ -96,7 +95,7 @@
          (geom (ref desc 'geometry))
          (max (ref desc 'max-key-code))
          (name->keycode (xkb-name->keycode-hash desc))
-         
+
          (vector (make-vector max       ;(- max min)
                               #f)))
     (for-each

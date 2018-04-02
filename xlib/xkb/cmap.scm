@@ -1,4 +1,3 @@
-
 ;; operating on the Client map (of XKB)
 
 (define-module xlib.xkb.cmap
@@ -38,10 +37,10 @@
 (define (type-names->types desc type-names)
   (map
       (lambda (type-name)
-	(receive (type index)
-	    (find-type-by-name desc type-name)
-	  ;; (cons type index)
-	  type))
+        (receive (type index)
+            (find-type-by-name desc type-name)
+          ;; (cons type index)
+          type))
     type-names))
 
 
@@ -55,9 +54,9 @@
     ;; find the types  string->
     (let* ((real-types
             (map (lambda (type-name)
-		   (receive (type index)
-		       (find-type-by-name desc type-name)
-		     (cons type index)))
+                   (receive (type index)
+                       (find-type-by-name desc type-name)
+                     (cons type index)))
               type-names))
            ;;
            (max-width
@@ -87,20 +86,20 @@
       ((dpy #f))
     (cond
      ((not (= (length keysyms-matrix)
-	      (length types)))
+              (length types)))
       (error "mismatch between the number of types provided, and lists of keysyms."))
      ;; now, check that every type has the right number of
      ((not (every (lambda (keysyms type)
-		    (logformat "type ~a has ~d levels\n"
-		      (if dpy
-			  (x-atom-name dpy (slot-ref type 'name))
-			(slot-ref type 'name))
-		      (slot-ref type 'num-levels))
+                    (logformat "type ~a has ~d levels\n"
+                      (if dpy
+                          (x-atom-name dpy (slot-ref type 'name))
+                        (slot-ref type 'name))
+                      (slot-ref type 'num-levels))
 
-		    (= (length keysyms)
-		       (slot-ref type 'num-levels)))
+                    (= (length keysyms)
+                       (slot-ref type 'num-levels)))
              keysyms-matrix
-	     types))
+             types))
       (error "the matrix has different rows than the types have (shift) levels."))
      (else
       #t))))
@@ -192,7 +191,7 @@
             (set! found type)
             (set! index i)))))
     (if (not found)
-	(error "type not found"))
+        (error "type not found"))
     (values found index)))
 
 ;;; fancy
@@ -271,16 +270,16 @@
 (define (xkb-allocate-keycode desc device)
   (let1 busy (xkb-unallocated-keycodes desc)
     (let1 new
-	;; find between the range:
-	(find-in-numbers 1 245
-	  (lambda (i)
-	    (or (vector-ref busy i)
-		(let1 node (xkb-keycode->node desc i)
+        ;; find between the range:
+        (find-in-numbers 1 245
+          (lambda (i)
+            (or (vector-ref busy i)
+                (let1 node (xkb-keycode->node desc i)
 
-		  (not (zero? (ref node 'groups))))
-		(not (null? (forks-to (ref desc 'dpy) i)))
-		;;(not (zero? (ref (xkb-keycode->node desc i) 'groups)))
-		)))
+                  (not (zero? (ref node 'groups))))
+                (not (null? (forks-to (ref desc 'dpy) i)))
+                ;;(not (zero? (ref (xkb-keycode->node desc i) 'groups)))
+                )))
       (logformat "xkb-allocate-keycode: ~d\n" new)
     new)))
 

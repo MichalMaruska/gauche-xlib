@@ -1,4 +1,3 @@
-
 ;; todo:
 ;; I should have an object for Changes.
 
@@ -79,7 +78,7 @@
     (xkb-control-keyrepeats-set! xkb-c two (= 1 control-1)))
   (xkb-change-keycode desc one)
   (xkb-change-keycode desc two))
-                             
+
 
 (select-module xlib.xkb.fork)
 (provide "xlib/xkb/fork")
