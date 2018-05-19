@@ -42,8 +42,6 @@
   )
 
 
-
-
 ;;   we have to store the XKB parameters in the object,
 ;;
 (define-cproc xkb-open-display (name::<const-char*>)
@@ -58,27 +56,27 @@
   /* Scm_Warn(\"%s\", __FUNCTION__); */
   dpy = XkbOpenDisplay((char*) name, &event_rtrn, &error_rtrn, &major, &minor, &reason_rtrn);
   if (reason_rtrn){
-	switch (reason_rtrn) {
-	    case XkbOD_BadLibraryVersion:
-		Scm_Warn(\"%s was compiled with XKB version %d.%02d\\n\",
-				program,XkbMajorVersion,XkbMinorVersion);
-		Scm_Error(\"X library supports incompatible version %d.%02d\\n\",major,minor);
-		break;
-	    case XkbOD_ConnectionRefused:
-		Scm_Error(\"Cannot open display \\\"%s\\\"\\n\",name);
-		break;
-	    case XkbOD_NonXkbServer:
-		Scm_Error(\"XKB extension not present on %s\\n\",name);
-		break;
-	    case XkbOD_BadServerVersion:
-		Scm_Warn(\"%s was compiled with XKB version %d.%02d\\n\",
-				program,XkbMajorVersion,XkbMinorVersion);
-		Scm_Error(\"Server %s uses incompatible version %d.%02d\\n\",
-				name,major,minor);
-		break;
-	    default:
-	        Scm_Error(\"Unknown error %d from XkbOpenDisplay\\n\",error_rtrn);
-	}
+        switch (reason_rtrn) {
+            case XkbOD_BadLibraryVersion:
+                Scm_Warn(\"%s was compiled with XKB version %d.%02d\\n\",
+                                program,XkbMajorVersion,XkbMinorVersion);
+                Scm_Error(\"X library supports incompatible version %d.%02d\\n\",major,minor);
+                break;
+            case XkbOD_ConnectionRefused:
+                Scm_Error(\"Cannot open display \\\"%s\\\"\\n\",name);
+                break;
+            case XkbOD_NonXkbServer:
+                Scm_Error(\"XKB extension not present on %s\\n\",name);
+                break;
+            case XkbOD_BadServerVersion:
+                Scm_Warn(\"%s was compiled with XKB version %d.%02d\\n\",
+                                program,XkbMajorVersion,XkbMinorVersion);
+                Scm_Error(\"Server %s uses incompatible version %d.%02d\\n\",
+                                name,major,minor);
+                break;
+            default:
+                Scm_Error(\"Unknown error %d from XkbOpenDisplay\\n\",error_rtrn);
+        }
   };
   XSetErrorHandler(error_handler);
   return Scm_Values5(new_x_dpy(dpy),Scm_MakeInteger(event_rtrn),Scm_MakeInteger(error_rtrn),
@@ -129,54 +127,54 @@ return SCM_TRUE;")
 #if 0 /* XLIB_ILLEGAL_ACCESS */
 typedef struct _XDisplay
 {
-	XExtData *ext_data;	/* hook for extension to hang data */
-	struct _XPrivate *private1;
-	int fd;			/* Network socket. */
-	int private2;
-	int proto_major_version;/* major version of server's X protocol */
-	int proto_minor_version;/* minor version of servers X protocol */
-	char *vendor;		/* vendor of the server hardware */
+        XExtData *ext_data;     /* hook for extension to hang data */
+        struct _XPrivate *private1;
+        int fd;                 /* Network socket. */
+        int private2;
+        int proto_major_version;/* major version of server's X protocol */
+        int proto_minor_version;/* minor version of servers X protocol */
+        char *vendor;           /* vendor of the server hardware */
         XID private3;
-	XID private4;
-	XID private5;
-	int private6;
-	XID (*resource_alloc)(	/* allocator function */
-		struct _XDisplay*
-	);
-	int byte_order;		/* screen byte order, LSBFirst, MSBFirst */
-	int bitmap_unit;	/* padding and data requirements */
-	int bitmap_pad;		/* padding requirements on bitmaps */
-	int bitmap_bit_order;	/* LeastSignificant or MostSignificant */
-	int nformats;		/* number of pixmap formats in list */
-	ScreenFormat *pixmap_format;	/* pixmap format list */
-	int private8;
-	int release;		/* release of the server */
-	struct _XPrivate *private9, *private10;
-	int qlen;		/* Length of input event queue */
-	unsigned long last_request_read; /* seq number of last event read */
-	unsigned long request;	/* sequence number of last request. */
-	XPointer private11;
-	XPointer private12;
-	XPointer private13;
-	XPointer private14;
-	unsigned max_request_size; /* maximum number 32 bit words in request*/
-	struct _XrmHashBucketRec *db;
-	int (*private15)(
-		struct _XDisplay*
-		);
-	char *display_name;	/* \"host:display\" string used on this connect*/
-	int default_screen;	/* default screen for operations */
-	int nscreens;		/* number of screens on this server*/
-	Screen *screens;	/* pointer to list of screens */
-	unsigned long motion_buffer;	/* size of motion buffer */
-	unsigned long private16;
-	int min_keycode;	/* minimum defined keycode */
-	int max_keycode;	/* maximum defined keycode */
-	XPointer private17;
-	XPointer private18;
-	int private19;
-	char *xdefaults;	/* contents of defaults from server */
-	/* there is more to this structure, but it is private to Xlib */
+        XID private4;
+        XID private5;
+        int private6;
+        XID (*resource_alloc)(  /* allocator function */
+                struct _XDisplay*
+        );
+        int byte_order;         /* screen byte order, LSBFirst, MSBFirst */
+        int bitmap_unit;        /* padding and data requirements */
+        int bitmap_pad;         /* padding requirements on bitmaps */
+        int bitmap_bit_order;   /* LeastSignificant or MostSignificant */
+        int nformats;           /* number of pixmap formats in list */
+        ScreenFormat *pixmap_format;    /* pixmap format list */
+        int private8;
+        int release;            /* release of the server */
+        struct _XPrivate *private9, *private10;
+        int qlen;               /* Length of input event queue */
+        unsigned long last_request_read; /* seq number of last event read */
+        unsigned long request;  /* sequence number of last request. */
+        XPointer private11;
+        XPointer private12;
+        XPointer private13;
+        XPointer private14;
+        unsigned max_request_size; /* maximum number 32 bit words in request*/
+        struct _XrmHashBucketRec *db;
+        int (*private15)(
+                struct _XDisplay*
+                );
+        char *display_name;     /* \"host:display\" string used on this connect*/
+        int default_screen;     /* default screen for operations */
+        int nscreens;           /* number of screens on this server*/
+        Screen *screens;        /* pointer to list of screens */
+        unsigned long motion_buffer;    /* size of motion buffer */
+        unsigned long private16;
+        int min_keycode;        /* minimum defined keycode */
+        int max_keycode;        /* maximum defined keycode */
+        XPointer private17;
+        XPointer private18;
+        int private19;
+        char *xdefaults;        /* contents of defaults from server */
+        /* there is more to this structure, but it is private to Xlib */
 } my_display;
 #endif
 
@@ -254,9 +252,9 @@ return (Scm_MakePortWithFd(SCM_MAKE_STR(\"display_fd\"), SCM_PORT_INPUT,
   (return <Window> "DefaultRootWindow"))
 
 (define-cproc x-create-simple-window (display::<Display*>
-				      parent::<Window> x::<uint> y::<uint>
-				      w::<uint> h::<uint>
-				      border::<uint>  border-color::<uint> background::<uint>)
+                                      parent::<Window> x::<uint> y::<uint>
+                                      w::<uint> h::<uint>
+                                      border::<uint>  border-color::<uint> background::<uint>)
   (return <Window>
           "XCreateSimpleWindow"
           ;;"(display, parent, x, y, w, h, border, border_color, background);"
@@ -474,10 +472,10 @@ return result;")
 ;   if (P)
 ;   {
 ;    Scm_Printf(out, \"#<pg-handle %s@%s as %s>\",
-; 		   PQdb(P),
-; 		   PQhost(P),
-; 		   PQuser(P)
-; 		   )			; /* fixme: no name */
+;                  PQdb(P),
+;                  PQhost(P),
+;                  PQuser(P)
+;                  )                    ; /* fixme: no name */
 ;    } else Scm_Printf(out, \"#<pg-handle null>\") ;
 ;   }"
 
@@ -573,8 +571,8 @@ return result;")
                                         ;     :type
                                         ;     :c-name "u.keyButtonPointer.event") ;
 
-   )					;(conn :type <pg-handle>)
-                                        ;  ()					;fields  conninfo ...
+   )                                    ;(conn :type <pg-handle>)
+                                        ;  ()                                   ;fields  conninfo ...
                                         ;  (allocator (c "new_pg_handle"))
                                         ;(printer (c "pg_print"))
                                         ;()
@@ -588,7 +586,7 @@ return result;")
   )
 
 
-(define-cclass <xkb-state>			;qualifier ???  :base  :built-in
+(define-cclass <xkb-state>                      ;qualifier ???  :base  :built-in
   "ScmXkbStateRec*"                             ;Scm_Xkb_event
   "Scm_XkbStateRec_Class"
   ;; cpa:
@@ -629,9 +627,9 @@ return (Scm_Make_XkbStateRec(state));
 (define-cclass <xkb-event>
   "Scm_XkbEvent*"
   "ScmXkbEvent_class"
-  ()					;cpa
-  ()					;(conn :type <pg-handle>)
-                                        ;  ()					;fields  conninfo ...
+  ()                                    ;cpa
+  ()                                    ;(conn :type <pg-handle>)
+                                        ;  ()                                   ;fields  conninfo ...
                                         ;  (allocator (c "new_pg_handle"))
                                         ;(printer (c "pg_print"))
                                         ;()
@@ -830,7 +828,7 @@ else
 
 (define-cclass <xkb-controls> "ScmXkbControls"
   "ScmXkbControls_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (repeat-delay
     :type <uint>
@@ -872,7 +870,7 @@ else
 
 (define-cclass <xkb-names> "ScmXkbNames"
   "ScmXkbNames_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (keycodes :type <atom>)              ; ??
    (geometry :type <atom>)
@@ -947,7 +945,7 @@ return Scm_MakeString(name, len, len, SCM_MAKSTR_COPYING);")
 
 (define-cclass <xkb-client-map> "ScmXkbClient_Map"
   "ScmXkbClient_Map_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (num-types :type <int>)              ; ??
    ;; get the list of types
@@ -968,7 +966,7 @@ return Scm_MakeString(name, len, len, SCM_MAKSTR_COPYING);")
 
 (define-cclass <xkb-server-map> "ScmXkbServer_Map"
   "ScmXkbServer_Map_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (num-acts :type <int>)              ; ??
    ;; get the list of types
@@ -989,7 +987,7 @@ return Scm_MakeString(name, len, len, SCM_MAKSTR_COPYING);")
 
 (define-cclass <xkb-geometry-key> "ScmXkbGeometry_Key"
   "ScmXkbGeometry_Key_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (name
     ;;:type <int>)
@@ -1021,7 +1019,7 @@ return Scm_MakeString((char*) name, len, len, SCM_MAKSTR_COPYING);"
 
 (define-cclass <xkb-geometry-row> "ScmXkbGeometry_Row"
   "ScmXkbGeometry_Row_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (top  :type <int>)
    (left  :type <int>)
@@ -1052,7 +1050,7 @@ return new_xkb_geometry_key(g->keys + i);")
 
 (define-cclass <xkb-geometry-section> "ScmXkbGeometry_Section"
   "ScmXkbGeometry_Section_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (name  :type <atom>)
    (priority  :type
@@ -1094,7 +1092,7 @@ return new_xkb_geometry_row(g->rows + i);")
 
 (define-cclass <xkb-geometry> "ScmXkbGeometry"
   "ScmXkbGeometry_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (name  :type <atom>)
    (width-mm  :type <int>)
@@ -1170,7 +1168,7 @@ SCM_RETURN(SCM_OBJ(names));")
 
 (define-cclass <xkb-desc> "ScmXkbDesc"
   "ScmXkbDesc_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (dpy ;:type <Display*>
         :getter "UNUSED(obj);
@@ -1198,7 +1196,7 @@ return ((ScmObj) ((ScmXkbDesc*)OBJARG)->scm_display);"
     )
 
    )
-                                        ;  ()					;fields  conninfo ...
+                                        ;  ()                                   ;fields  conninfo ...
                                         ;  (allocator (c "new_pg_handle"))
   ;(printer (c "pg_print"))
                                         ;()
@@ -1218,7 +1216,7 @@ return ((ScmObj) ((ScmXkbDesc*)OBJARG)->scm_display);"
 
 (define-cclass <xkb-type> "ScmXkbType"
   "ScmXkbType_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (name :type <atom>)              ; ??
    ;(level-names :type <atom>)
@@ -1260,7 +1258,7 @@ return Scm_MakeInteger(type->level_names[i]);")
 
 (define-cclass <xkb-mapping> "ScmXkbMapping"
   "ScmXkbMapping_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (active :type <int>)              ; fixme:  <bool>
    ;(level-names :type <atom>)
@@ -1325,7 +1323,7 @@ return SCM_UNDEFINED;")
 
 (define-cclass <xkb-key-node> "ScmXkbKey_Node"
   "ScmXkbKey_Node_class"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (groups :getter
            "return Scm_MakeInteger(XkbNumGroups(obj->group_info));"
@@ -1521,7 +1519,7 @@ return SCM_FALSE;
 
 (define-cclass <xkb-mod-action> "ScmXkbModAction"
   "Scm_XkbModActionClass"
-  ()					;cpa
+  ()                                    ;cpa
   (
    ;; fixme:  <uchar>
    (type :type <uint8>)
@@ -1538,7 +1536,7 @@ return SCM_FALSE;
 
 (define-cclass <xkb-group-action> "ScmXkbGroupAction"
   "Scm_XkbGroupActionClass"
-  ()					;cpa
+  ()                                    ;cpa
   (
    ;; fixme:  <uchar>
    (type :type <uint8>)
@@ -1575,7 +1573,7 @@ if (! result)
     Scm_Error(\"memory allocation failed\");
 
 /*as a hack i make the action a mod-action:  fixme:  NoAction would be better! */
-result->type = XkbSA_NoAction;		/* SetMods */
+result->type = XkbSA_NoAction;          /* SetMods */
 return SCM_UNDEFINED;")
 
 
@@ -1842,7 +1840,7 @@ return (ScmObj) (sd->xkb_desc = (ScmXkbDesc*) new_xkb_desc(desc, (ScmXDpy*) dpy_
 
 (define-cclass <xkb-component-list> "ScmXkbComponentListRec"
   "Scm_XkbComponentListRecClass"
-  ()					;cpa
+  ()                                    ;cpa
   (
    (num-keymaps :type <int>)
    (num-keycodes :type <int>)
@@ -1856,14 +1854,14 @@ return (ScmObj) (sd->xkb_desc = (ScmXkbDesc*) new_xkb_desc(desc, (ScmXDpy*) dpy_
   "return Scm_charPtr_Box(clist->keymaps[n].name);")
 
 (define-cproc xkb-list-components (display::<Display*> device::<uint>
-						       max::<int>
-                                                   keymap::<const-char*>
-                                                   keycodes::<const-char*>
-                                                   types::<const-char*>
-                                                   compat::<const-char*>
-                                                   symbols::<const-char*>
-                                                   geometry::<const-char*>
-                                                   )
+                                                       max::<int>
+                                                       keymap::<const-char*>
+                                                       keycodes::<const-char*>
+                                                       types::<const-char*>
+                                                       compat::<const-char*>
+                                                       symbols::<const-char*>
+                                                       geometry::<const-char*>
+                                                       )
   "
     const XkbComponentNamesRec comp =
       {
@@ -2077,7 +2075,7 @@ SCM_RETURN(Scm_MakeInteger(res));")
 
 ;; just a wrapper:
 (define-cproc xfork-configure-key (dpy::<Display*> device::<uint> what::<uint> keycode::<key-code>
-						   value::<uint>)
+                                                   value::<uint>)
   "
 if (ForkConfigureKey(dpy, device, what, keycode, value)!= Success)
    Scm_Error(\"%s failed\", __FUNCTION__);
@@ -2093,8 +2091,8 @@ SCM_RETURN(Scm_MakeInteger(res));")
 
 ;; twin:
 (define-cproc xfork-get-configure-key-twin (dpy::<Display*> device::<uint>
-							    what::<uint> keycode::<key-code>
-							    twin::<key-code>)
+                                                            what::<uint> keycode::<key-code>
+                                                            twin::<key-code>)
 "int res;
 if (ForkGetConfigureKeyTwin(dpy, device, what, keycode, twin, &res) != Success)
    Scm_Error(\"%s failed\", __FUNCTION__);
@@ -2102,7 +2100,7 @@ SCM_RETURN(Scm_MakeInteger(res));")
 
 
 (define-cproc xfork-configure-key-twin (dpy::<Display*> device::<uint> what::<uint>
-							keycode::<key-code> twin::<key-code> value::<uint>)
+                                                        keycode::<key-code> twin::<key-code> value::<uint>)
   "
 if (ForkConfigureKeyTwin(dpy, device, what, keycode, twin, value)!= Success)
    Scm_Error(\"%s failed\", __FUNCTION__);
@@ -2201,9 +2199,9 @@ return Scm_Values5(
   "SCM_RETURN( Scm_MakePointer( 0 ) );")
 
 (define-cproc XCreateGC (display::<Display*>
-			 d::<Window>
-			 valuemask::<ulong>
-			 values::<XGCValues*>)
+                         d::<Window>
+                         valuemask::<ulong>
+                         values::<XGCValues*>)
   (return <GC> "XCreateGC"))
 
 ;; 7.2 - Using Graphics Context Convenience Routines
@@ -2240,18 +2238,12 @@ return SCM_TRUE;
 
 ;; 8.6 - Drawing Text
 (define-cproc XDrawString (display::<Display*> d::<Drawable> gc::<GC> x::<int> y::<int>
-					       string::<const-char*> length::<int>)
+                                               string::<const-char*> length::<int>)
   (return <Status> "XDrawString"))
 
 
 
 ;;
 "#define Scm_Init_xlib  internal_init_xlib"
-
-
-
-
-
-
 
 
